@@ -22,6 +22,8 @@
 
                 <Content Include="Data\MappyJson.json" />
 
+                <EmbeddedResource Include="icon.png" />
+
                 <EmbeddedResource Include="mappy.json" />
 
                 <Content Include="repo.json" />

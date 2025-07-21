@@ -1,0 +1,21 @@
+{
+    "Author": "rail",
+    "Name": "BeastieBuddy",
+    "Punchline": "A searchable mob database with spawn locations.",
+    "Description": "Adds a window with an async-searchable list of all mobs and their known locations, using community data. Use /bbuddy to open.",
+    "Changelog": "Initial Release.",
+    "IsHide": false,
+    "InternalName": "BeastieBuddy",
+    "AssemblyVersion": "1.0.0.0",
+    "RepoUrl": "https://github.com/rail2025/BeastieBuddy",
+    "ApplicableVersion": "any",
+    "Tags": [
+        "mob",
+        "hunt",
+        "location"
+    ],
+    "DalamudApiLevel": 12,
+    "LoadPriority": 0,
+    "SupportsProfiles": false,
+    "IconUrl": "https://raw.githubusercontent.com/rail2025/BeastieBuddy/main/icon.png"
+}

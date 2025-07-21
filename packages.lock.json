@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net9.0-windows7.0": {
+      "DalamudPackager": {
+        "type": "Direct",
+        "requested": "[12.0.0, )",
+        "resolved": "12.0.0",
+        "contentHash": "J5TJLV3f16T/E2H2P17ClWjtfEBPpq3yxvqW46eN36JCm6wR+EaoaYkqG9Rm5sHqs3/nK/vKjWWyvEs/jhKoXw=="
+      },
+      "DotNet.ReproducibleBuilds": {
+        "type": "Direct",
+        "requested": "[1.2.25, )",
+        "resolved": "1.2.25",
+        "contentHash": "xCXiw7BCxHJ8pF6wPepRUddlh2dlQlbr81gXA72hdk4FLHkKXas7EH/n+fk5UCA/YfMqG1Z6XaPiUjDbUNBUzg=="
+      },
+      "Lumina": {
+        "type": "Direct",
+        "requested": "[6.3.0, )",
+        "resolved": "6.3.0",
+        "contentHash": "FQlZ16KhXtPGCEq1KeRTDZ14uq6qrvW2vYnNNlCpW7Xs1iLhF8AJsbYG8S0y1NnP7BRholPY8KGToVTsvmb8jw==",
+        "dependencies": {
+          "Microsoft.Extensions.ObjectPool": "8.0.7"
+        }
+      },
+      "Lumina.Excel": {
+        "type": "Direct",
+        "requested": "[7.2.3, )",
+        "resolved": "7.2.3",
+        "contentHash": "pOqKvtjEEfvYu9gSBYMOqgptAMKGzkRWuT1hlAR9N8aXDYDMBzktscuetX94Si+E4svORjpbyw6NtW0BllW0cw==",
+        "dependencies": {
+          "Lumina": "5.7.0"
+        }
+      },
+      "LuminaSupplemental.Excel": {
+        "type": "Direct",
+        "requested": "[2.3.12, )",
+        "resolved": "2.3.12",
+        "contentHash": "WzPWX9ujThckv6E7+8ikDe2Ndh1NTg5kyFWG9CbZ3kY7uEuz3wjEn6LavbMKJEA66TTvqsCCVQIXJ4gnJAxhBA==",
+        "dependencies": {
+          "CSVFile": "3.2.0",
+          "CsvHelper": "30.0.1",
+          "Sylvan.Data.Csv": "1.3.9"
+        }
+      },
+      "Newtonsoft.Json": {
+        "type": "Direct",
+        "requested": "[13.0.3, )",
+        "resolved": "13.0.3",
+        "contentHash": "HrC5BXdl00IP9zeV+0Z848QWPAoCr9P3bDEZguI+gkLcBKAOxix/tLEAAHC+UvDNPv4a2d18lOReHMOagPa+zQ=="
+      },
+      "SixLabors.ImageSharp": {
+        "type": "Direct",
+        "requested": "[3.1.8, )",
+        "resolved": "3.1.8",
+        "contentHash": "8eJkROLGh6DBQLR666q2aOpAaean2puZaZ6Ur9YxoyGzjaZhv8OJSxtnDou54+OXMkXtLUdyQC0so47sOsqZjg=="
+      },
+      "SixLabors.ImageSharp.Web": {
+        "type": "Direct",
+        "requested": "[3.1.5, )",
+        "resolved": "3.1.5",
+        "contentHash": "xC0gpnV14tY1fXtmhOoyhqf0XSy9g48wLzRS89SRgOHkO8enLJDjATv4ghklSsjMtRZuseYHkYXGty80Jp2Eow==",
+        "dependencies": {
+          "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
+          "SixLabors.ImageSharp": "3.1.8"
+        }
+      },
+      "CSVFile": {
+        "type": "Transitive",
+        "resolved": "3.2.0",
+        "contentHash": "sEVTg2rdBomJbh5bKCQqBtTgA0ojnkMab/hGwQ73UWy20n8jcJTLZ2dDKmnKPD0kTHMEeJK9TXpCgHn+RMcBYg=="
+      },
+      "CsvHelper": {
+        "type": "Transitive",
+        "resolved": "30.0.1",
+        "contentHash": "rcZtgbWR+As4G3Vpgx0AMNmShGuQLFjkHAPIIflzrfkJCx8/AOd4m96ZRmiU1Wi39qS5UVjV0P8qdgqOo5Cwyg=="
+      },
+      "Microsoft.Extensions.ObjectPool": {
+        "type": "Transitive",
+        "resolved": "8.0.7",
+        "contentHash": "2yLweyqmpuuFSRo+I3sLHMxmnAgNcI537kBJiyv49U2ZEqo00jZcG8lrnD8uCiOJp9IklYyTZULtbsXoFVzsjQ=="
+      },
+      "Microsoft.IO.RecyclableMemoryStream": {
+        "type": "Transitive",
+        "resolved": "3.0.1",
+        "contentHash": "s/s20YTVY9r9TPfTrN5g8zPF1YhwxyqO6PxUkrYTGI2B+OGPe9AdajWZrLhFqXIvqIW23fnUE4+ztrUWNU1+9g=="
+      },
+      "Sylvan.Data.Csv": {
+        "type": "Transitive",
+        "resolved": "1.3.9",
+        "contentHash": "ej6VghLaUn5/GK6jGFvd5aHn3Wue+Yp2tpmyI507PBRb/lFA6WAPS+3yKGr5wtFzh0zaE53CnCxhjc0ZW8xu3g=="
+      }
+    }
+  }
+}

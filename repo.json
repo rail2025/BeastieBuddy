@@ -3,7 +3,7 @@
         "Author": "rail",
         "Name": "BeastieBuddy",
         "Punchline": "A searchable mob database with spawn locations.",
-        "Description": "Adds a window with an async-searchable list of all mobs and their known locations, using community data. Use /bbuddy to open.",
+        "Description": "A searchable list of all mobs and their known locations, using community data. Use /bbuddy to open.",
         "Changelog": "Initial Release.",
         "IsHide": false,
         "InternalName": "BeastieBuddy",

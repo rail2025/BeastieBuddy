@@ -1,4 +1,12 @@
+using BeastieBuddy.Data;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Interface.Windowing;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,15 +14,9 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Interface.Windowing;
-using Dalamud.Plugin.Services;
-using Newtonsoft.Json;
-using BeastieBuddy.Data;
-using Lumina.Excel.Sheets;
+using MapLinkPayload = Dalamud.Game.Text.SeStringHandling.Payloads.MapLinkPayload;
 
 namespace BeastieBuddy.Windows;
-
 
 public class MobData
 {
@@ -32,30 +34,116 @@ public class MainWindow : Window, IDisposable
     private string searchText = string.Empty;
     private readonly IDataManager dataManager;
     private readonly IGameGui gameGui;
-    private bool isDataLoaded = false;
+    private readonly Plugin plugin;
+    private readonly ITextureProvider textureProvider;
 
-    public MainWindow(IDataManager dataManager, IGameGui gameGui) : base("BeastieBuddy##MainWindow")
+    private IDalamudTextureWrap? finalTexture;
+    private ISharedImmediateTexture? loadingTexture;
+
+    private bool isDataLoaded = false;
+    private string? tempImagePath;
+    private bool loadImageAttempted = false;
+
+    public MainWindow(Plugin plugin, IDataManager dataManager, IGameGui gameGui, ITextureProvider textureProvider) : base("BeastieBuddy##MainWindow")
     {
+        this.plugin = plugin;
         this.dataManager = dataManager;
-        this.gameGui = gameGui; 
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400, 500), MaximumSize = new Vector2(float.MaxValue, float.MaxValue) };
+        this.gameGui = gameGui;
+        this.textureProvider = textureProvider;
+        var globalScale = ImGui.GetIO().FontGlobalScale;
+        this.Size = new Vector2(375, 330) * globalScale;
+        this.SizeCondition = ImGuiCond.FirstUseEver;
+
+        this.SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(375, 330) * globalScale,
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+        };
 
         mobDatabase = LoadAndLinkData();
         filteredResults = new List<MobData>();
     }
 
-    public void Dispose() { }
-
-    private Vector2 ConvertRawToGameCoordinates(float rawX, float rawY, Map mapInfo)
+    public void Dispose()
     {
-        var sizeFactor = mapInfo.SizeFactor / 100.0f;
-        var gameX = (41.0f / sizeFactor) * (rawX / 2048.0f) + 1.0f;
-        var gameY = (41.0f / sizeFactor) * (rawY / 2048.0f) + 1.0f;
-        return new Vector2(gameX, gameY);
+        finalTexture?.Dispose();
+        if (!string.IsNullOrEmpty(tempImagePath) && File.Exists(tempImagePath))
+        {
+            try
+            {
+                File.Delete(tempImagePath);
+            }
+            catch (IOException ex)
+            {
+                Plugin.Log.Error(ex, "Failed to delete temporary image file.");
+            }
+        }
+    }
+
+    private void TryFinishLoadingImage()
+    {
+        if (finalTexture != null || loadingTexture == null)
+        {
+            return;
+        }
+        finalTexture = loadingTexture.GetWrapOrDefault();
+    }
+
+    private void StartLoadingImage()
+    {
+        if (loadImageAttempted) return;
+        loadImageAttempted = true;
+
+        var assembly = Assembly.GetExecutingAssembly();
+        var resourceName = "BeastieBuddy.icon.png";
+
+        try
+        {
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null) return;
+
+            using var memoryStream = new MemoryStream();
+            stream.CopyTo(memoryStream);
+            var bytes = memoryStream.ToArray();
+
+            tempImagePath = Path.GetTempFileName();
+            File.WriteAllBytes(tempImagePath, bytes);
+
+            loadingTexture = this.textureProvider.GetFromFile(tempImagePath);
+        }
+        catch (Exception ex)
+        {
+            Plugin.Log.Error(ex, "An exception occurred during image loading.");
+        }
     }
 
     public override void Draw()
     {
+        var globalScale = ImGui.GetIO().FontGlobalScale; 
+        StartLoadingImage();
+
+        if (this.finalTexture == null)
+        {
+            TryFinishLoadingImage();
+        }
+
+        if (this.finalTexture != null)
+        {
+            try
+            {
+                var windowPos = ImGui.GetWindowPos();
+                var windowSize = ImGui.GetWindowSize();
+                var imageSize = new Vector2(250, 250) * globalScale;
+                var imagePos = windowPos + (windowSize - imageSize) * 0.5f;
+
+                ImGui.GetWindowDrawList().AddImage(finalTexture.ImGuiHandle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
+            }
+            catch (ObjectDisposedException)
+            {
+                this.finalTexture = null;
+            }
+        }
+
         if (!isDataLoaded)
         {
             ImGui.TextWrapped("Error: Could not load the required data file.");
@@ -65,6 +153,12 @@ public class MainWindow : Window, IDisposable
         if (ImGui.InputTextWithHint("##searchBar", "Search for a monster...", ref searchText, 256))
         {
             UpdateFilteredResultsAsync();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("About"))
+        {
+            plugin.ToggleAboutUI();
         }
 
         ImGui.Separator();
@@ -161,5 +255,13 @@ public class MainWindow : Window, IDisposable
 
         isDataLoaded = true;
         return finalDatabase.DistinctBy(m => new { m.Name, m.Zone, m.Coordinates.X, m.Coordinates.Y }).OrderBy(m => m.Name).ToList();
+    }
+
+    private Vector2 ConvertRawToGameCoordinates(float rawX, float rawY, Map mapInfo)
+    {
+        var sizeFactor = mapInfo.SizeFactor / 100.0f;
+        var gameX = (41.0f / sizeFactor) * (rawX / 2048.0f) + 1.0f;
+        var gameY = (41.0f / sizeFactor) * (rawY / 2048.0f) + 1.0f;
+        return new Vector2(gameX, gameY);
     }
 }

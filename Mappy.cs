@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Newtonsoft.Json; // You will need to add the Newtonsoft.Json NuGet package to your project
+using Newtonsoft.Json;
 
 public class MappyData
 {

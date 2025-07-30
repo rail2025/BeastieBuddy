@@ -16,3 +16,9 @@ Searchable bestiary for Beastmaster use in FFXIV
 2. Next, use `/xlplugins` (chat) or `xlplugins` (console) to open up the Plugin Installer.
     * In here, go to and the `BeastieBuddy` should be visible. Enable it.
 3. You should now be able to use `/bbuddy`!
+
+
+🔹 Data sourced from the community-maintained [FFXIV Wiki](https://ffxiv.consolegameswiki.com/wiki/).  
+🔹 Dataset cleaned, structured, and updated by @rail2025 using automation.  
+🔹 By default, mob data is served via a lightweight API for ease of updates.  
+🔹 Want to go fully offline? You can run the scraper and use a local dataset instead. Instructions included.

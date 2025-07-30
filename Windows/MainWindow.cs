@@ -2,266 +2,208 @@ using BeastieBuddy.Data;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
-using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Lumina.Excel.Sheets;
 using MapLinkPayload = Dalamud.Game.Text.SeStringHandling.Payloads.MapLinkPayload;
 
-namespace BeastieBuddy.Windows;
-
-public class MobData
+namespace BeastieBuddy.Windows
 {
-    public string Name { get; set; } = string.Empty;
-    public string Zone { get; set; } = "Unknown Zone";
-    public Vector2 Coordinates { get; set; }
-    public uint TerritoryTypeID { get; set; }
-    public uint MapID { get; set; }
-}
-
-public class MainWindow : Window, IDisposable
-{
-    private readonly List<MobData> mobDatabase;
-    private List<MobData> filteredResults;
-    private string searchText = string.Empty;
-    private readonly IDataManager dataManager;
-    private readonly IGameGui gameGui;
-    private readonly Plugin plugin;
-    private readonly ITextureProvider textureProvider;
-
-    private IDalamudTextureWrap? finalTexture;
-    private ISharedImmediateTexture? loadingTexture;
-
-    private bool isDataLoaded = false;
-    private string? tempImagePath;
-    private bool loadImageAttempted = false;
-
-    public MainWindow(Plugin plugin, IDataManager dataManager, IGameGui gameGui, ITextureProvider textureProvider) : base("BeastieBuddy##MainWindow")
+    public class MainWindow : Window, IDisposable
     {
-        this.plugin = plugin;
-        this.dataManager = dataManager;
-        this.gameGui = gameGui;
-        this.textureProvider = textureProvider;
-        var globalScale = ImGui.GetIO().FontGlobalScale;
-        this.Size = new Vector2(375, 330) * globalScale;
-        this.SizeCondition = ImGuiCond.FirstUseEver;
+        private string searchText = string.Empty;
+        private List<MobData> searchResults = new();
+        private bool isSearching = false;
 
-        this.SizeConstraints = new WindowSizeConstraints
+        private CancellationTokenSource? searchCancellationTokenSource;
+
+        private readonly Plugin plugin;
+        private readonly IGameGui gameGui;
+        private readonly ITextureProvider textureProvider;
+        private readonly ServerClient serverClient;
+        private readonly byte[]? iconBytes;
+        private readonly Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds = new();
+
+        private IDalamudTextureWrap? backgroundTexture;
+
+        public MainWindow(Plugin plugin, IGameGui gameGui, ITextureProvider textureProvider, IDataManager dataManager) : base("BeastieBuddy##MainWindow")
         {
-            MinimumSize = new Vector2(375, 330) * globalScale,
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
-        };
+            this.plugin = plugin;
+            this.gameGui = gameGui;
+            this.textureProvider = textureProvider;
+            this.serverClient = new ServerClient();
 
-        mobDatabase = LoadAndLinkData();
-        filteredResults = new List<MobData>();
-    }
+            // Pre-populate the zone name dictionary for faster lookups
+            var maps = dataManager.GetExcelSheet<Map>()!;
+            foreach (var map in maps)
+            {
+                // Use ValueNullable to safely access nested RowRefs
+                var zoneName = map.TerritoryType.ValueNullable?.PlaceName.ValueNullable?.Name.ToString();
 
-    public void Dispose()
-    {
-        finalTexture?.Dispose();
-        if (!string.IsNullOrEmpty(tempImagePath) && File.Exists(tempImagePath))
-        {
+                if (!string.IsNullOrEmpty(zoneName) && !zoneNameToIds.ContainsKey(zoneName))
+                {
+                    zoneNameToIds[zoneName] = (map.TerritoryType.RowId, map.RowId);
+                }
+            }
+
+
+            // Load image data into memory once
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "BeastieBuddy.icon.png";
             try
             {
-                File.Delete(tempImagePath);
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    using var memoryStream = new MemoryStream();
+                    stream.CopyTo(memoryStream);
+                    this.iconBytes = memoryStream.ToArray();
+                }
             }
-            catch (IOException ex)
+            catch (Exception ex)
             {
-                Plugin.Log.Error(ex, "Failed to delete temporary image file.");
+                Plugin.Log.Error(ex, "Failed to load background image resource.");
+            }
+
+            var globalScale = ImGui.GetIO().FontGlobalScale;
+            Size = new Vector2(375, 330) * globalScale;
+            SizeCondition = ImGuiCond.FirstUseEver;
+
+            SizeConstraints = new WindowSizeConstraints
+            {
+                MinimumSize = new Vector2(375, 330) * globalScale,
+                MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
+            };
+        }
+
+        public void Dispose()
+        {
+            searchCancellationTokenSource?.Dispose();
+            serverClient.Dispose();
+            backgroundTexture?.Dispose();
+        }
+
+        public override void OnOpen()
+        {
+            if (backgroundTexture == null && iconBytes != null)
+            {
+                backgroundTexture = textureProvider.CreateFromImageAsync(iconBytes).Result;
             }
         }
-    }
 
-    private void TryFinishLoadingImage()
-    {
-        if (finalTexture != null || loadingTexture == null)
+        public override void OnClose()
         {
-            return;
-        }
-        finalTexture = loadingTexture.GetWrapOrDefault();
-    }
-
-    private void StartLoadingImage()
-    {
-        if (loadImageAttempted) return;
-        loadImageAttempted = true;
-
-        var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = "BeastieBuddy.icon.png";
-
-        try
-        {
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream == null) return;
-
-            using var memoryStream = new MemoryStream();
-            stream.CopyTo(memoryStream);
-            var bytes = memoryStream.ToArray();
-
-            tempImagePath = Path.GetTempFileName();
-            File.WriteAllBytes(tempImagePath, bytes);
-
-            loadingTexture = this.textureProvider.GetFromFile(tempImagePath);
-        }
-        catch (Exception ex)
-        {
-            Plugin.Log.Error(ex, "An exception occurred during image loading.");
-        }
-    }
-
-    public override void Draw()
-    {
-        var globalScale = ImGui.GetIO().FontGlobalScale; 
-        StartLoadingImage();
-
-        if (this.finalTexture == null)
-        {
-            TryFinishLoadingImage();
+            backgroundTexture?.Dispose();
+            backgroundTexture = null;
         }
 
-        if (this.finalTexture != null)
+        public override void Draw()
         {
-            try
+            if (backgroundTexture != null)
             {
+                var globalScale = ImGui.GetIO().FontGlobalScale;
                 var windowPos = ImGui.GetWindowPos();
                 var windowSize = ImGui.GetWindowSize();
                 var imageSize = new Vector2(250, 250) * globalScale;
                 var imagePos = windowPos + (windowSize - imageSize) * 0.5f;
 
-                ImGui.GetWindowDrawList().AddImage(finalTexture.ImGuiHandle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
+                ImGui.GetWindowDrawList().AddImage(backgroundTexture.ImGuiHandle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
             }
-            catch (ObjectDisposedException)
+
+            if (ImGui.InputTextWithHint("##searchBar", "Search for a monster...", ref searchText, 256))
             {
-                this.finalTexture = null;
+                isSearching = true;
+                DebouncedSearch();
             }
-        }
 
-        if (!isDataLoaded)
-        {
-            ImGui.TextWrapped("Error: Could not load the required data file.");
-            return;
-        }
-
-        if (ImGui.InputTextWithHint("##searchBar", "Search for a monster...", ref searchText, 256))
-        {
-            UpdateFilteredResultsAsync();
-        }
-
-        ImGui.SameLine();
-        if (ImGui.Button("About"))
-        {
-            plugin.ToggleAboutUI();
-        }
-
-        ImGui.Separator();
-
-        if (ImGui.BeginChild("##scrolling_region"))
-        {
-            if (!string.IsNullOrEmpty(searchText))
+            ImGui.SameLine();
+            if (ImGui.Button("About"))
             {
-                if (!filteredResults.Any())
+                plugin.ToggleAboutUI();
+            }
+
+            ImGui.Separator();
+
+            if (ImGui.BeginChild("##scrolling_region"))
+            {
+                if (isSearching)
                 {
-                    ImGui.Text("No monsters found.");
+                    ImGui.Text("Searching...");
                 }
-                else
+                else if (!string.IsNullOrWhiteSpace(searchText))
                 {
-                    foreach (var mob in filteredResults)
+                    if (!searchResults.Any())
                     {
-                        if (ImGui.Selectable($"##{mob.Name}{mob.Coordinates.X}{mob.Coordinates.Y}", false, ImGuiSelectableFlags.None, new Vector2(0, ImGui.GetTextLineHeight())))
+                        ImGui.Text("No monsters found.");
+                    }
+                    else
+                    {
+                        foreach (var mob in searchResults)
                         {
-                            var mapLink = new MapLinkPayload(mob.TerritoryTypeID, mob.MapID, mob.Coordinates.X, mob.Coordinates.Y);
-                            this.gameGui.OpenMapWithMapLink(mapLink);
+                            if (mob != null && ImGui.Selectable($"##{mob.Name}{mob.X}{mob.Y}", false, ImGuiSelectableFlags.None, new Vector2(0, ImGui.GetTextLineHeight())))
+                            {
+                                if (zoneNameToIds.TryGetValue(mob.Zone, out var ids))
+                                {
+                                    var mapLink = new MapLinkPayload(ids.TerritoryTypeID, ids.MapID, mob.X, mob.Y);
+                                    gameGui.OpenMapWithMapLink(mapLink);
+                                }
+                            }
+
+                            if (mob != null)
+                            {
+                                ImGui.SameLine(0);
+                                ImGui.Text(mob.Name);
+
+                                var locationText = (mob.X == 0 && mob.Y == 0)
+                                    ? mob.Zone
+                                    : $"{mob.Zone} ({mob.X:F1}, {mob.Y:F1})";
+
+                                var locationTextSize = ImGui.CalcTextSize(locationText);
+                                ImGui.SameLine(ImGui.GetContentRegionAvail().X - locationTextSize.X);
+                                ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), locationText);
+                            }
                         }
-
-                        ImGui.SameLine(0);
-                        ImGui.Text(mob.Name);
-
-                        var locationText = $"{mob.Zone} ({mob.Coordinates.X:F1}, {mob.Coordinates.Y:F1})";
-                        var locationTextSize = ImGui.CalcTextSize(locationText);
-                        ImGui.SameLine(ImGui.GetContentRegionAvail().X - locationTextSize.X);
-                        ImGui.TextColored(new Vector4(0.7f, 0.7f, 0.7f, 1.0f), locationText);
                     }
                 }
             }
-        }
-        ImGui.EndChild();
-    }
-
-    private void UpdateFilteredResultsAsync()
-    {
-        Task.Run(() =>
-        {
-            var currentSearchText = searchText;
-            if (string.IsNullOrWhiteSpace(currentSearchText))
-            {
-                filteredResults = new List<MobData>();
-            }
-            else
-            {
-                filteredResults = mobDatabase.Where(mob => mob.Name.Contains(currentSearchText, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-        });
-    }
-
-    private List<MobData> LoadAndLinkData()
-    {
-        var mobNames = this.dataManager.GetExcelSheet<BNpcName>()!;
-        var maps = this.dataManager.GetExcelSheet<Map>()!;
-
-        var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = "BeastieBuddy.mappy.json";
-
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null)
-        {
-            Plugin.Log.Error($"Failed to load embedded resource: {resourceName}. Stream was null.");
-            isDataLoaded = false;
-            return new List<MobData>();
+            ImGui.EndChild();
         }
 
-        using var reader = new StreamReader(stream);
-        var mappyJson = reader.ReadToEnd();
-        var mappyData = JsonConvert.DeserializeObject<List<MappyData>>(mappyJson)!;
-
-        var finalDatabase = new List<MobData>();
-        foreach (var mappyEntry in mappyData)
+        private void DebouncedSearch()
         {
-            if (!mobNames.TryGetRow(mappyEntry.BNpcNameID, out var mobNameRow)) continue;
-            var mobName = mobNameRow.Singular.ToString();
-            if (string.IsNullOrEmpty(mobName)) continue;
+            searchCancellationTokenSource?.Cancel();
+            searchCancellationTokenSource?.Dispose();
+            searchCancellationTokenSource = new CancellationTokenSource();
+            var token = searchCancellationTokenSource.Token;
 
-            if (!maps.TryGetRow(mappyEntry.MapID, out var mapRow)) continue;
-            var zone = mapRow.TerritoryType.Value.PlaceName.Value.Name.ToString() ?? "Unknown Zone";
-
-            var gameCoords = ConvertRawToGameCoordinates(mappyEntry.PixelX, mappyEntry.PixelY, mapRow);
-
-            finalDatabase.Add(new MobData
+            Task.Delay(250, token).ContinueWith(async _ =>
             {
-                Name = mobName,
-                Zone = zone,
-                Coordinates = gameCoords,
-                TerritoryTypeID = mapRow.TerritoryType.Value.RowId,
-                MapID = mappyEntry.MapID
-            });
+                if (token.IsCancellationRequested) return;
+
+                var currentSearchText = searchText;
+                if (string.IsNullOrWhiteSpace(currentSearchText))
+                {
+                    searchResults.Clear();
+                }
+                else
+                {
+                    var results = await serverClient.SearchAsync(currentSearchText, token);
+                    if (results != null && !token.IsCancellationRequested)
+                    {
+                        searchResults = results;
+                    }
+                }
+                isSearching = false;
+
+            }, token, TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
         }
-
-        isDataLoaded = true;
-        return finalDatabase.DistinctBy(m => new { m.Name, m.Zone, m.Coordinates.X, m.Coordinates.Y }).OrderBy(m => m.Name).ToList();
-    }
-
-    private Vector2 ConvertRawToGameCoordinates(float rawX, float rawY, Map mapInfo)
-    {
-        var sizeFactor = mapInfo.SizeFactor / 100.0f;
-        var gameX = (41.0f / sizeFactor) * (rawX / 2048.0f) + 1.0f;
-        var gameY = (41.0f / sizeFactor) * (rawY / 2048.0f) + 1.0f;
-        return new Vector2(gameX, gameY);
     }
 }

@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/12.0.2">
     <PropertyGroup>
         <Authors>rail</Authors>
-        <Version>1.0.1.0</Version>
+        <Version>1.1.1.0</Version>
         <AssemblyName>BeastieBuddy</AssemblyName>
         <RootNamespace>BeastieBuddy</RootNamespace>
         <DalamudApiLevel>12</DalamudApiLevel>
@@ -20,13 +20,9 @@
 
                <ItemGroup>
 
-                <Content Include="Data\MappyJson.json" />
-
                 <EmbeddedResource Include="iconsmall.png" />
 
                 <EmbeddedResource Include="icon.png" />
-
-                <EmbeddedResource Include="mappy.json" />
 
                 <Content Include="repo.json" />
             </ItemGroup>

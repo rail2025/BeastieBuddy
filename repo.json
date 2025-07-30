@@ -2,23 +2,25 @@
     {
         "Author": "rail",
         "Name": "BeastieBuddy",
-        "Punchline": "A searchable mob database with spawn locations.",
-        "Description": "Adds a window with an async-searchable list of all mobs and their known locations, using community data. Use /bbuddy to open.",
+        "Punchline": "A searchable mob database with spawn locations for Beastmaster, Blue Mage, or hunts.",
+        "Description": "A searchable list of all mobs and their known locations, using community data. Great for Blue Mage, Beastmaster, or hunts! Use /bbuddy to open.",
         "Changelog": "Initial Release.",
         "IsHide": false,
         "InternalName": "BeastieBuddy",
-        "AssemblyVersion": "1.0.1.0",
+        "AssemblyVersion": "1.1.1.0",
         "RepoUrl": "https://github.com/rail2025/BeastieBuddy",
         "ApplicableVersion": "any",
         "Tags": [
             "mob",
             "hunt",
-            "location"
+            "location",
+	"Beastmaster",
+	"Blue Mage"
         ],
         "DalamudApiLevel": 12,
-        "DownloadLinkInstall": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.0.1.0/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.0.1.0/latest.zip",
-        "DownloadLinkTesting": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.0.1.0/latest.zip",
+        "DownloadLinkInstall": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.0/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.0/latest.zip",
+        "DownloadLinkTesting": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.0/latest.zip",
         "LoadPriority": 0,
         "SupportsProfiles": false,
         "IconUrl": "https://raw.githubusercontent.com/rail2025/BeastieBuddy/main/icon.png"

@@ -7,7 +7,6 @@ namespace BeastieBuddy.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
-    // The fix is here: Renamed to follow C# naming conventions.
     private readonly Configuration configuration;
 
     public ConfigWindow(BeastieBuddy.Plugin plugin) : base("BeastieBuddy Configuration##ConfigWindow")

@@ -19,6 +19,6 @@ Searchable bestiary for Beastmaster use in FFXIV
 
 
 🔹 Data sourced from the community-maintained [FFXIV Wiki](https://ffxiv.consolegameswiki.com/wiki/).  
-🔹 Dataset cleaned, structured, and updated by @rail2025 using automation.  
+🔹 Dataset cleaned, structured, and updated every content patch (within a few days once data is logged)  
 🔹 By default, mob data is served via a lightweight API for ease of updates.  
-🔹 Want to go fully offline? You can run the scraper and use a local dataset instead. Instructions included.
+🔹 Want to go fully offline? You can run a scraper and use a local dataset instead.

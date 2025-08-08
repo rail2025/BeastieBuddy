@@ -7,7 +7,11 @@
         "Changelog": "Initial Release.",
         "IsHide": false,
         "InternalName": "BeastieBuddy",
+<<<<<<< HEAD
         "AssemblyVersion": "1.1.1.1",
+=======
+        "AssemblyVersion": "1.1.1.0",
+>>>>>>> 5448eaff1402595fea1df126b0e0907cf101494a
         "RepoUrl": "https://github.com/rail2025/BeastieBuddy",
         "ApplicableVersion": "any",
         "Tags": [
@@ -15,10 +19,17 @@
             "hunt",
             "location"
         ],
+<<<<<<< HEAD
         "DalamudApiLevel": 13,
         "DownloadLinkInstall": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.1/latest.zip",
         "DownloadLinkUpdate": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.1/latest.zip",
         "DownloadLinkTesting": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.1/latest.zip",
+=======
+        "DalamudApiLevel": 12,
+        "DownloadLinkInstall": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.0/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.0/latest.zip",
+        "DownloadLinkTesting": "https://github.com/rail2025/BeastieBuddy/releases/download/v1.1.1.0/latest.zip",
+>>>>>>> 5448eaff1402595fea1df126b0e0907cf101494a
         "LoadPriority": 0,
         "SupportsProfiles": false,
         "IconUrl": "https://raw.githubusercontent.com/rail2025/BeastieBuddy/main/icon.png"

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/12.0.2">
+<Project Sdk="Dalamud.NET.Sdk/13.0.0">
     <PropertyGroup>
         <Authors>rail</Authors>
-        <Version>1.1.1.0</Version>
+        <Version>1.1.1.1</Version>
         <AssemblyName>BeastieBuddy</AssemblyName>
         <RootNamespace>BeastieBuddy</RootNamespace>
-        <DalamudApiLevel>12</DalamudApiLevel>
+        <DalamudApiLevel>13</DalamudApiLevel>
         <TargetFramework>net9.0-windows</TargetFramework>
         <Platforms>x64</Platforms>
         <LangVersion>latest</LangVersion>
@@ -28,12 +28,16 @@
             </ItemGroup>
 
             <ItemGroup>
-                <PackageReference Include="Lumina" Version="6.3.0" />
-                <PackageReference Include="Lumina.Excel" Version="7.2.3" />
-                <PackageReference Include="LuminaSupplemental.Excel" Version="2.3.12" />
-                <PackageReference Include="SixLabors.ImageSharp" Version="3.1.8" />
-                <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.1.5" />
+                <PackageReference Include="Lumina" Version="6.4.0" />
+                <PackageReference Include="Lumina.Excel" Version="7.3.1" />
+                <PackageReference Include="LuminaSupplemental.Excel" Version="3.0.0" />
+                <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+                <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.2.0" />
                 <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+            </ItemGroup>
+
+            <ItemGroup>
+              <PackageReference Update="DalamudPackager" Version="13.0.0" />
             </ItemGroup>
         </Project>
     

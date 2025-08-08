@@ -3,7 +3,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -115,7 +115,7 @@ namespace BeastieBuddy.Windows
                 var imageSize = new Vector2(250, 250) * globalScale;
                 var imagePos = windowPos + (windowSize - imageSize) * 0.5f;
 
-                ImGui.GetWindowDrawList().AddImage(backgroundTexture.ImGuiHandle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
+                ImGui.GetWindowDrawList().AddImage(backgroundTexture.Handle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
             }
 
             if (ImGui.InputTextWithHint("##searchBar", "Search for a monster...", ref searchText, 256))

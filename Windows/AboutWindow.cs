@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Reflection;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace BeastieBuddy.Windows
 {

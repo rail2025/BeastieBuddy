@@ -19,21 +19,25 @@ namespace BeastieBuddy.Windows
 {
     public class MainWindow : Window, IDisposable
     {
+        // Beastie Search
         private string searchText = string.Empty;
         private List<MobData> searchResults = new();
         private bool isSearching = false;
-
         private CancellationTokenSource? searchCancellationTokenSource;
+        private readonly ServerClient serverClient;
+        private readonly Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds = new();
+
+        // Blue Mage UI
+        private readonly BlueMageUI blueMageUI;
 
         private readonly Plugin plugin;
         private readonly IGameGui gameGui;
         private readonly ITextureProvider textureProvider;
-        private readonly ServerClient serverClient;
         private readonly byte[]? iconBytes;
-        private readonly Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds = new();
-
         private IDalamudTextureWrap? backgroundTexture;
 
+        private string? _tabToFocus;
+        
         public MainWindow(Plugin plugin, IGameGui gameGui, ITextureProvider textureProvider, IDataManager dataManager) : base("BeastieBuddy##MainWindow")
         {
             this.plugin = plugin;
@@ -41,19 +45,22 @@ namespace BeastieBuddy.Windows
             this.textureProvider = textureProvider;
             this.serverClient = new ServerClient();
 
+           // this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab);
+
             // Pre-populate the zone name dictionary for faster lookups
             var maps = dataManager.GetExcelSheet<Map>()!;
             foreach (var map in maps)
+
             {
                 // Use ValueNullable to safely access nested RowRefs
                 var zoneName = map.TerritoryType.ValueNullable?.PlaceName.ValueNullable?.Name.ToString();
-
                 if (!string.IsNullOrEmpty(zoneName) && !zoneNameToIds.ContainsKey(zoneName))
                 {
                     zoneNameToIds[zoneName] = (map.TerritoryType.RowId, map.RowId);
                 }
             }
 
+            this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab);
 
             // Load image data into memory once
             var assembly = Assembly.GetExecutingAssembly();
@@ -107,17 +114,40 @@ namespace BeastieBuddy.Windows
 
         public override void Draw()
         {
-            if (backgroundTexture != null)
+            // --- UPDATED: Simplified tab switching logic ---
+            if (ImGui.BeginTabBar("##MainTabs"))
             {
-                var globalScale = ImGui.GetIO().FontGlobalScale;
-                var windowPos = ImGui.GetWindowPos();
-                var windowSize = ImGui.GetWindowSize();
-                var imageSize = new Vector2(250, 250) * globalScale;
-                var imagePos = windowPos + (windowSize - imageSize) * 0.5f;
-
-                ImGui.GetWindowDrawList().AddImage(backgroundTexture.Handle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
+                ImGuiTabItemFlags beastieFlags = ImGuiTabItemFlags.None;
+                if (_tabToFocus == "Beastie Search")
+                    {
+                    beastieFlags = ImGuiTabItemFlags.SetSelected;
+                    _tabToFocus = null; // Clear the focus request after one frame
+                }
+                if (ImGui.BeginTabItem("Beastie Search", beastieFlags))
+                {
+                    DrawSearchTab();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Blue Mage Spellbook"))
+                {
+                    blueMageUI.Draw();
+                    ImGui.EndTabItem();
+                }
+                ImGui.EndTabBar();
             }
+        }
 
+        public void SwitchToSearchTab(string mobName)
+        {
+            _tabToFocus = "Beastie Search";
+            searchText = mobName;
+            isSearching = true;
+            DebouncedSearch();
+        }
+
+        private void DrawSearchTab()
+        {
+            // Draw the search bar and About button FIRST
             if (ImGui.InputTextWithHint("##searchBar", "Search for a monster...", ref searchText, 256))
             {
                 isSearching = true;
@@ -128,6 +158,21 @@ namespace BeastieBuddy.Windows
             if (ImGui.Button("About"))
             {
                 plugin.ToggleAboutUI();
+            }
+
+            if (backgroundTexture != null)
+            {
+                var globalScale = ImGui.GetIO().FontGlobalScale;
+                var imageSize = new Vector2(250, 250) * globalScale;
+
+                // Get the available space *after* the search bar has been drawn
+                var contentStartPos = ImGui.GetCursorScreenPos();
+                var contentSize = ImGui.GetContentRegionAvail();
+
+                // Center the image within that available space
+                var imagePos = contentStartPos + (contentSize - imageSize) * 0.5f;
+
+                ImGui.GetWindowDrawList().AddImage(backgroundTexture.Handle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);
             }
 
             ImGui.Separator();

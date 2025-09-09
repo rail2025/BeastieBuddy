@@ -41,7 +41,7 @@ namespace BeastieBuddy.Windows
             ImGui.Text("Created by: rail");
             ImGui.Text("With special thanks to the Dalamud Discord community.");
             ImGui.Text("Check out my other projects on github.com/rail2025/");
-            ImGui.Text("Aether Arena, AetherBreaker, AetherBreakout, and more.");
+            ImGui.Text("AetherDraw, WDIGViewer, AetherBreakout, and more.");
 
             ImGui.Spacing();
             ImGui.Separator();

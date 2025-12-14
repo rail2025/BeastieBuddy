@@ -14,7 +14,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(232, 90);
+        Size = new Vector2(350, 220);
         SizeCondition = ImGuiCond.Always;
 
         this.configuration = plugin.Configuration;
@@ -24,17 +24,50 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
-        var configValue = this.configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
+        bool save = false;
+
+        ImGui.Text("VFX Beacon Settings");
+
+        // Master Toggle
+        var vfxEnabled = this.configuration.IsVfxEnabled;
+        if (ImGui.Checkbox("Enable Map Beacons", ref vfxEnabled))
         {
-            this.configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-            this.configuration.Save();
+            this.configuration.IsVfxEnabled = vfxEnabled;
+            save = true;
+        }
+
+        // Distance Sliders
+        var pillarDist = this.configuration.PillarOfLightMinDistance;
+        if (ImGui.SliderFloat("Pillar Draw Distance", ref pillarDist, 10.0f, 100.0f))
+        {
+            this.configuration.PillarOfLightMinDistance = pillarDist;
+            save = true;
+        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Distance at which the large pillar of light appears.");
+
+        var starDist = this.configuration.StarMinDistance;
+        if (ImGui.SliderFloat("Star Draw Distance", ref starDist, 1.0f, 20.0f))
+        {
+            this.configuration.StarMinDistance = starDist;
+            save = true;
+        }
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Distance at which the pillar turns into a small star.");
+
+        var starHeight = this.configuration.StarHeightOffset;
+        if (ImGui.SliderFloat("Star Height Offset", ref starHeight, 0.0f, 5.0f))
+        {
+            this.configuration.StarHeightOffset = starHeight;
+            save = true;
         }
 
         var movable = this.configuration.IsConfigWindowMovable;
         if (ImGui.Checkbox("Movable Config Window", ref movable))
         {
             this.configuration.IsConfigWindowMovable = movable;
+            this.configuration.Save();
+        }
+        if (save)
+        {
             this.configuration.Save();
         }
     }

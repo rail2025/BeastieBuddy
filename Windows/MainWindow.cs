@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Lumina.Excel.Sheets;
 using MapLinkPayload = Dalamud.Game.Text.SeStringHandling.Payloads.MapLinkPayload;
+using BeastieBuddy.VfxSystem;
 
 namespace BeastieBuddy.Windows
 {
@@ -33,19 +34,21 @@ namespace BeastieBuddy.Windows
         private readonly Plugin plugin;
         private readonly IGameGui gameGui;
         private readonly ITextureProvider textureProvider;
+        private readonly BeaconController beaconController;
         private readonly byte[]? iconBytes;
         private IDalamudTextureWrap? backgroundTexture;
 
         private string? _tabToFocus;
         
-        public MainWindow(Plugin plugin, IGameGui gameGui, ITextureProvider textureProvider, IDataManager dataManager) : base("BeastieBuddy##MainWindow")
+        public MainWindow(Plugin plugin, IGameGui gameGui, ITextureProvider textureProvider, IDataManager dataManager, BeaconController beaconController) : base("BeastieBuddy##MainWindow")
         {
             this.plugin = plugin;
             this.gameGui = gameGui;
             this.textureProvider = textureProvider;
             this.serverClient = new ServerClient();
+            this.beaconController = beaconController;
 
-           // this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab);
+            // this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
 
             // Pre-populate the zone name dictionary for faster lookups
             var maps = dataManager.GetExcelSheet<Map>()!;
@@ -60,7 +63,7 @@ namespace BeastieBuddy.Windows
                 }
             }
 
-            this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab);
+            this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
 
             // Load image data into memory once
             var assembly = Assembly.GetExecutingAssembly();
@@ -199,6 +202,8 @@ namespace BeastieBuddy.Windows
                                 {
                                     var mapLink = new MapLinkPayload(ids.TerritoryTypeID, ids.MapID, mob.X, mob.Y);
                                     gameGui.OpenMapWithMapLink(mapLink);
+
+                                    beaconController.Spawn(mapLink);
                                 }
                             }
 

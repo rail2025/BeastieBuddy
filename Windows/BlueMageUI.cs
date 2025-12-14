@@ -1,6 +1,7 @@
 // BeastieBuddy/Windows/BlueMageUI.cs
 
 using BeastieBuddy.Data;
+using BeastieBuddy.VfxSystem;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
@@ -34,13 +35,17 @@ namespace BeastieBuddy.Windows
 
         private readonly Action<string> switchToSearchTab;
 
-        public BlueMageUI(IGameGui gameGui, Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds, Action<string> switchToSearchTab)
+        private readonly BeaconController beaconController;
+
+        public BlueMageUI(IGameGui gameGui, Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds, Action<string> switchToSearchTab, BeaconController beaconController)
         {
             // --- ADDED: Store the passed-in services ---
             this.gameGui = gameGui;
             this.zoneNameToIds = zoneNameToIds;
 
             this.switchToSearchTab = switchToSearchTab;
+
+            this.beaconController = beaconController;
 
             spells = new List<BlueMageSpell>();
             try
@@ -155,6 +160,7 @@ namespace BeastieBuddy.Windows
                             {
                                 var mapLink = new MapLinkPayload(ids.TerritoryTypeID, ids.MapID, source.X, source.Y);
                                 gameGui.OpenMapWithMapLink(mapLink);
+                                beaconController.Spawn(mapLink);
                             }
                         }
                     }

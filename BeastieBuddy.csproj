@@ -15,34 +15,50 @@
         <PackageProjectUrl>https://github.com/rail2025/BeastieBuddy</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
-
     </PropertyGroup>
 
-               <ItemGroup>
+    <PropertyGroup>
+        <DalamudLibPath>$(AppData)\XIVLauncher\addon\Hooks\dev</DalamudLibPath>
+    </PropertyGroup>
 
-                <EmbeddedResource Include="iconsmall.png" />
+    <PropertyGroup Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))'">
+        <DalamudLibPath>$(DALAMUD_HOME)</DalamudLibPath>
+    </PropertyGroup>
 
-                <EmbeddedResource Include="icon.png" />
+    <PropertyGroup Condition="'$(IsCI)' == 'true'">
+        <DalamudLibPath>$(HOME)/dalamud</DalamudLibPath>
+    </PropertyGroup>
 
-                <Content Include="repo.json" />
-            </ItemGroup>
+    <ItemGroup>
+        <Reference Include="FFXIVClientStructs">
+            <HintPath>$(DalamudLibPath)\FFXIVClientStructs.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
 
-               <ItemGroup>
-                 <EmbeddedResource Include="BlueMageSpells.yaml" />
-               </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="iconsmall.png" />
+        <EmbeddedResource Include="icon.png" />
+        <EmbeddedResource Include="vfx\HighFlareStar_groundTarget.avfx" />
+        <EmbeddedResource Include="vfx\PillarOfLightWithFlareStarTop_groundTarget.avfx" />
+        <Content Include="repo.json" />
+    </ItemGroup>
 
-            <ItemGroup>
-                <PackageReference Include="Lumina" Version="6.4.0" />
-                <PackageReference Include="Lumina.Excel" Version="7.3.1" />
-                <PackageReference Include="LuminaSupplemental.Excel" Version="3.0.0" />
-                <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
-                <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.2.0" />
-                <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-                <PackageReference Include="YamlDotNet" Version="16.3.0" />
-            </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="BlueMageSpells.yaml" />
+    </ItemGroup>
 
-            <ItemGroup>
-              <PackageReference Update="DalamudPackager" Version="13.0.0" />
-            </ItemGroup>
-        </Project>
-    
+    <ItemGroup>
+        <PackageReference Include="Lumina" Version="6.4.0" />
+        <PackageReference Include="Lumina.Excel" Version="7.3.1" />
+        <PackageReference Include="LuminaSupplemental.Excel" Version="3.0.0" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+        <PackageReference Include="SixLabors.ImageSharp.Web" Version="3.2.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Update="DalamudPackager" Version="13.0.0" />
+    </ItemGroup>
+</Project>

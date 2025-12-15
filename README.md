@@ -22,3 +22,6 @@ Searchable bestiary for Beastmaster use in FFXIV
 🔹 Dataset cleaned, structured, and updated every content patch (within a few days once data is logged)  
 🔹 By default, mob data is served via a lightweight API for ease of updates.  
 🔹 Want to go fully offline? You can run a scraper and use a local dataset instead.
+
+## Credits
+* **NorthStar** by [Pistachio Herald](https://github.com/pistachio-dev/NorthStar) - For the VFX spawning and file replacement architecture.

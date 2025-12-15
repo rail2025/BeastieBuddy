@@ -158,6 +158,12 @@ namespace BeastieBuddy.Windows
             }
 
             ImGui.SameLine();
+            if (ImGui.Button("Settings"))
+            {
+                plugin.ToggleConfigUI();
+            }
+
+            ImGui.SameLine();
             if (ImGui.Button("About"))
             {
                 plugin.ToggleAboutUI();

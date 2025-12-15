@@ -3,9 +3,8 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Numerics;
-using System.Reflection;
 
 namespace BeastieBuddy.VfxSystem;
 
@@ -18,8 +17,19 @@ public unsafe class BeaconController : IDisposable
     private MapLinkPayload? ActiveTarget { get; set; }
     private DateTime LastUpdate { get; set; }
 
-    private string PillarPath { get; set; } = string.Empty;
-    private string StarPath { get; set; } = string.Empty;
+    private IFramework Framework { get; }
+    private IPluginLog Log { get; }
+
+    // Defined Virtual paths (NorthStar constants) for VfxReplacer interception
+    public const string VfxRoute1 = "vfx/monster/gimmick4/eff/m5fa_b0_g11c0w.avfx";
+    public const string VfxRoute2 = "vfx/monster/gimmick4/eff/m5fa_b0_g12c0w.avfx";
+
+    // Public dictionary for VfxReplacer to read mappings
+    public static readonly Dictionary<string, string> Replacements = new()
+    {
+        { VfxRoute1, "PillarOfLightWithFlareStarTop_groundTarget.avfx" },
+        { VfxRoute2, "HighFlareStar_groundTarget.avfx" }
+    };
 
     private enum BeaconState { None, Pillar, Star }
     private BeaconState CurrentState { get; set; } = BeaconState.None;
@@ -27,54 +37,21 @@ public unsafe class BeaconController : IDisposable
     public BeaconController(Plugin plugin)
     {
         PluginInstance = plugin;
-
-        PillarPath = ExtractAsset("PillarOfLightWithFlareStarTop_groundTarget.avfx");
-        StarPath = ExtractAsset("HighFlareStar_groundTarget.avfx");
+        Framework = BeastieBuddy.Plugin.Framework;
+        Log = BeastieBuddy.Plugin.Log;
 
         if (FeatureGlobalLock)
         {
             try
             {
-                VfxEngine = new Vfx(plugin);
-                BeastieBuddy.Plugin.Framework.Update += OnUpdate;
+                // Initialize Vfx Engine only (Hooking is now in VfxReplacer)
+                VfxEngine = new Vfx(plugin, BeastieBuddy.Plugin.GameInteropProvider, BeastieBuddy.Plugin.Framework, BeastieBuddy.Plugin.Log);
+                Framework.Update += OnUpdate;
             }
             catch (Exception ex)
             {
-                BeastieBuddy.Plugin.Log.Error(ex, "Failed to initialize VFX Engine.");
+                Log.Error(ex, "Failed to initialize VFX Engine.");
             }
-        }
-    }
-
-    private string ExtractAsset(string fileName)
-    {
-        try
-        {
-            // FIX: Access static PluginInterface via the type 'BeastieBuddy.Plugin'
-            var configDir = BeastieBuddy.Plugin.PluginInterface.GetPluginConfigDirectory();
-            var vfxDir = Path.Combine(configDir, "vfx");
-            Directory.CreateDirectory(vfxDir);
-            var filePath = Path.Combine(vfxDir, fileName);
-
-            var assembly = Assembly.GetExecutingAssembly();
-            // Ensure this resource path matches your project structure (Folder: vfx)
-            var resourceName = $"BeastieBuddy.vfx.{fileName}";
-
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream == null)
-            {
-                BeastieBuddy.Plugin.Log.Error($"Could not find embedded resource: {resourceName}");
-                return "";
-            }
-
-            using var fileStream = File.Create(filePath);
-            stream.CopyTo(fileStream);
-
-            return filePath;
-        }
-        catch (Exception ex)
-        {
-            BeastieBuddy.Plugin.Log.Error(ex, $"Failed to extract VFX asset: {fileName}");
-            return "";
         }
     }
 
@@ -85,7 +62,7 @@ public unsafe class BeaconController : IDisposable
         ActiveTarget = mapLink;
         CurrentState = BeaconState.None;
         VfxEngine.QueueRemoveAll();
-        OnUpdate(BeastieBuddy.Plugin.Framework);
+        OnUpdate(Framework);
     }
 
     public void Clear()
@@ -97,6 +74,16 @@ public unsafe class BeaconController : IDisposable
 
     private void OnUpdate(IFramework framework)
     {
+        if (!PluginInstance.Configuration.IsVfxEnabled)
+        {
+            if (CurrentState != BeaconState.None)
+            {
+                VfxEngine?.QueueRemoveAll();
+                CurrentState = BeaconState.None;
+            }
+            return;
+        }
+
         if (ActiveTarget == null || VfxEngine == null) return;
 
         if ((DateTime.Now - LastUpdate).TotalSeconds < 0.1) return;
@@ -130,14 +117,14 @@ public unsafe class BeaconController : IDisposable
             VfxEngine.QueueRemoveAll();
             var spawnId = Guid.NewGuid();
 
-            if (desiredState == BeaconState.Pillar && !string.IsNullOrEmpty(PillarPath))
+            if (desiredState == BeaconState.Pillar)
             {
-                VfxEngine.QueueSpawn(spawnId, PillarPath, targetPos, Quaternion.Identity);
+                VfxEngine.QueueSpawn(spawnId, VfxRoute1, targetPos, Quaternion.Identity);
             }
-            else if (desiredState == BeaconState.Star && !string.IsNullOrEmpty(StarPath))
+            else if (desiredState == BeaconState.Star)
             {
                 var adjusted = targetPos with { Y = targetPos.Y + PluginInstance.Configuration.StarHeightOffset };
-                VfxEngine.QueueSpawn(spawnId, StarPath, adjusted, Quaternion.Identity);
+                VfxEngine.QueueSpawn(spawnId, VfxRoute2, adjusted, Quaternion.Identity);
             }
             CurrentState = desiredState;
         }
@@ -158,7 +145,7 @@ public unsafe class BeaconController : IDisposable
 
     public void Dispose()
     {
-        BeastieBuddy.Plugin.Framework.Update -= OnUpdate;
+        Framework.Update -= OnUpdate;
         VfxEngine?.Dispose();
     }
 }

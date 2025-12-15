@@ -39,6 +39,7 @@ namespace BeastieBuddy.Windows
             ImGui.Spacing();
 
             ImGui.Text("Created by: rail");
+            ImGui.Text("VFX Beacon system adapted from NorthStar by Pistachio Herald.");
             ImGui.Text("With special thanks to the Dalamud Discord community.");
             ImGui.Text("Check out my other projects on github.com/rail2025/");
             ImGui.Text("AetherDraw, WDIGViewer, AetherBreakout, and more.");

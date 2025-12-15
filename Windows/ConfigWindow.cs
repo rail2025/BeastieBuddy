@@ -38,12 +38,12 @@ public class ConfigWindow : Window, IDisposable
 
         // Distance Sliders
         var pillarDist = this.configuration.PillarOfLightMinDistance;
-        if (ImGui.SliderFloat("Pillar Draw Distance", ref pillarDist, 10.0f, 100.0f))
+        if (ImGui.SliderFloat("Pillar Min Distance", ref pillarDist, 10.0f, 100.0f))
         {
             this.configuration.PillarOfLightMinDistance = pillarDist;
             save = true;
         }
-        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Distance at which the large pillar of light appears.");
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("The minimum distance you must be from the target to see the large Pillar.\nIf you are closer than this, the small Star will be shown instead.\n(Lower value = Pillar stays visible longer as you approach)");
 
         var starDist = this.configuration.StarMinDistance;
         if (ImGui.SliderFloat("Star Draw Distance", ref starDist, 1.0f, 20.0f))

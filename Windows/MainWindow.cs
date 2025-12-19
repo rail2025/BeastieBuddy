@@ -1,9 +1,12 @@
 using BeastieBuddy.Data;
+using BeastieBuddy.VfxSystem;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Text;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using Dalamud.Bindings.ImGui;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,9 +15,10 @@ using System.Numerics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Lumina.Excel.Sheets;
 using MapLinkPayload = Dalamud.Game.Text.SeStringHandling.Payloads.MapLinkPayload;
-using BeastieBuddy.VfxSystem;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace BeastieBuddy.Windows
 {
@@ -30,7 +34,7 @@ namespace BeastieBuddy.Windows
 
         // Blue Mage UI
         private readonly BlueMageUI blueMageUI;
-
+        private readonly IDataManager dataManager;
         private readonly Plugin plugin;
         private readonly IGameGui gameGui;
         private readonly ITextureProvider textureProvider;
@@ -45,6 +49,7 @@ namespace BeastieBuddy.Windows
             this.plugin = plugin;
             this.gameGui = gameGui;
             this.textureProvider = textureProvider;
+            this.dataManager = dataManager;
             this.serverClient = new ServerClient();
             this.beaconController = beaconController;
 
@@ -55,15 +60,17 @@ namespace BeastieBuddy.Windows
             foreach (var map in maps)
 
             {
-                // Use ValueNullable to safely access nested RowRefs
+                if (map.TerritoryType.ValueNullable?.Map.RowId != map.RowId) continue;
+
                 var zoneName = map.TerritoryType.ValueNullable?.PlaceName.ValueNullable?.Name.ToString();
                 if (!string.IsNullOrEmpty(zoneName) && !zoneNameToIds.ContainsKey(zoneName))
                 {
+                    Plugin.Log.Debug($"[MapInit] Zone '{zoneName}' -> MapID: {map.RowId}, Territory: {map.TerritoryType.RowId}");
                     zoneNameToIds[zoneName] = (map.TerritoryType.RowId, map.RowId);
                 }
             }
 
-            this.blueMageUI = new BlueMageUI(this.gameGui, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
+            this.blueMageUI = new BlueMageUI(this.gameGui, this.dataManager, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
 
             // Load image data into memory once
             var assembly = Assembly.GetExecutingAssembly();
@@ -94,6 +101,25 @@ namespace BeastieBuddy.Windows
             };
         }
 
+        private unsafe void OpenMapSafe(uint territoryId, uint mapId, float x, float y)
+        {
+            try
+            {
+                var agent = AgentMap.Instance();
+                if (agent != null)
+                {
+                    agent->SetFlagMapMarker(territoryId, mapId, x, y, 60561);
+                    agent->OpenMap(mapId, territoryId, null, FFXIVClientStructs.FFXIV.Client.UI.Agent.MapType.FlagMarker);
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "[BeastieBuddy] AgentMap native open failed.");
+            }
+
+            var payload = new MapLinkPayload(territoryId, mapId, x, y);
+            beaconController.Spawn(payload);
+        }
         public void Dispose()
         {
             searchCancellationTokenSource?.Dispose();
@@ -206,10 +232,7 @@ namespace BeastieBuddy.Windows
                             {
                                 if (zoneNameToIds.TryGetValue(mob.Zone, out var ids))
                                 {
-                                    var mapLink = new MapLinkPayload(ids.TerritoryTypeID, ids.MapID, mob.X, mob.Y);
-                                    gameGui.OpenMapWithMapLink(mapLink);
-
-                                    beaconController.Spawn(mapLink);
+                                    OpenMapSafe(ids.TerritoryTypeID, ids.MapID, (float)mob.X, (float)mob.Y);
                                 }
                             }
 

@@ -28,6 +28,7 @@ namespace BeastieBuddy
         [PluginService] public static IClientState ClientState { get; private set; } = null!;
         [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
         [PluginService] public static IFramework Framework { get; private set; } = null!;
+        [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
 
         public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("BeastieBuddy");

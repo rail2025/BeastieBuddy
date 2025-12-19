@@ -20,11 +20,11 @@ public unsafe class BeaconController : IDisposable
     private IFramework Framework { get; }
     private IPluginLog Log { get; }
 
-    // Defined Virtual paths (NorthStar constants) for VfxReplacer interception
+    // Defined Virtual paths
     public const string VfxRoute1 = "vfx/monster/gimmick4/eff/m5fa_b0_g11c0w.avfx";
     public const string VfxRoute2 = "vfx/monster/gimmick4/eff/m5fa_b0_g12c0w.avfx";
 
-    // Public dictionary for VfxReplacer to read mappings
+    // Public dictionary for VfxReplacer
     public static readonly Dictionary<string, string> Replacements = new()
     {
         { VfxRoute1, "PillarOfLightWithFlareStarTop_groundTarget.avfx" },
@@ -44,7 +44,7 @@ public unsafe class BeaconController : IDisposable
         {
             try
             {
-                // Initialize Vfx Engine only (Hooking is now in VfxReplacer)
+                // Initialize Vfx Engine
                 VfxEngine = new Vfx(plugin, BeastieBuddy.Plugin.GameInteropProvider, BeastieBuddy.Plugin.Framework, BeastieBuddy.Plugin.Log);
                 Framework.Update += OnUpdate;
             }
@@ -55,12 +55,19 @@ public unsafe class BeaconController : IDisposable
         }
     }
 
+    // Overload to handle raw data calls from UI (Fixes CS1501)
+    public void Spawn(uint territoryType, uint mapId, float x, float y)
+    {
+        Spawn(new MapLinkPayload(territoryType, mapId, x, y));
+    }
+
     public void Spawn(MapLinkPayload mapLink)
     {
         if (!FeatureGlobalLock || VfxEngine == null || !PluginInstance.Configuration.IsVfxEnabled) return;
 
         ActiveTarget = mapLink;
         CurrentState = BeaconState.None;
+
         VfxEngine.QueueRemoveAll();
         OnUpdate(Framework);
     }
@@ -115,6 +122,7 @@ public unsafe class BeaconController : IDisposable
         if (CurrentState != desiredState)
         {
             VfxEngine.QueueRemoveAll();
+
             var spawnId = Guid.NewGuid();
 
             if (desiredState == BeaconState.Pillar)
@@ -138,7 +146,7 @@ public unsafe class BeaconController : IDisposable
         float scale = map.Value.SizeFactor / 100.0f;
         float worldX = (link.XCoord - 21.5f) * 50.0f / scale;
         float worldZ = (link.YCoord - 21.5f) * 50.0f / scale;
-        float worldY = BeastieBuddy.Plugin.ClientState.LocalPlayer?.Position.Y ?? 0;
+        float worldY = BeastieBuddy.Plugin.ObjectTable.LocalPlayer?.Position.Y ?? 0;
 
         return new Vector3(worldX, worldY, worldZ);
     }

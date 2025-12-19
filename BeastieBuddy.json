@@ -18,9 +18,5 @@
         "coords",
         "blue mage",
         "spell"
-    ],
-    "DalamudApiLevel": 14,
-    "LoadPriority": 0,
-    "SupportsProfiles": false,
-    "IconUrl": "https://raw.githubusercontent.com/rail2025/BeastieBuddy/main/icon.png"
+    ]
 }

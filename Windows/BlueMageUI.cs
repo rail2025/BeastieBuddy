@@ -10,6 +10,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
@@ -19,8 +20,8 @@ using System.Numerics;
 using System.Reflection;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using static Dalamud.Interface.Utility.Raii.ImRaii;
 using MapLinkPayload = Dalamud.Game.Text.SeStringHandling.Payloads.MapLinkPayload;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace BeastieBuddy.Windows
 {
@@ -45,7 +46,6 @@ namespace BeastieBuddy.Windows
 
         public BlueMageUI(IGameGui gameGui, IDataManager dataManager, Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds, Action<string> switchToSearchTab, BeaconController beaconController)
         {
-            // --- ADDED: Store the passed-in services ---
             this.gameGui = gameGui;
             this.dataManager = dataManager;
             this.zoneNameToIds = zoneNameToIds;
@@ -165,6 +165,7 @@ namespace BeastieBuddy.Windows
                         {
                             if (zoneNameToIds.TryGetValue(source.Location, out var ids))
                             {
+                                var mapLink = new MapLinkPayload(ids.TerritoryTypeID, ids.MapID, (float)source.X, (float)source.Y);
                                 try
                                 {
                                     unsafe
@@ -172,24 +173,28 @@ namespace BeastieBuddy.Windows
                                         var agent = AgentMap.Instance();
                                         if (agent != null)
                                         {
-                                            agent->OpenMap(ids.MapID, ids.TerritoryTypeID, null, FFXIVClientStructs.FFXIV.Client.UI.Agent.MapType.FlagMarker);
-                                            agent->SetFlagMapMarker(ids.TerritoryTypeID, ids.MapID, (float)source.X, (float)source.Y, 60561);
+                                            float internalX = mapLink.RawX / 1000.0f;
+                                            float internalY = mapLink.RawY / 1000.0f;
 
+                                            Plugin.Log.Info($"[MapDebug] RawX: {mapLink.RawX} -> Float: {internalX}");
+
+                                            agent->FlagMarkerCount = 0;
+                                            agent->SetFlagMapMarker(ids.TerritoryTypeID, ids.MapID, internalX, internalY, 60561);
+                                            agent->OpenMap(ids.MapID, ids.TerritoryTypeID, null, FFXIVClientStructs.FFXIV.Client.UI.Agent.MapType.FlagMarker);
                                         }
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    Plugin.Log.Error(ex, "[BeastieBuddy] AgentMap open failed.");
+                                    Plugin.Log.Error(ex, "[BeastieBuddy] AgentMap Vector3 call failed.");
                                 }
-                                var payload = new MapLinkPayload(ids.TerritoryTypeID, ids.MapID, (float)source.X, (float)source.Y);
-                                beaconController.Spawn(payload);
-                            }
+                                beaconController.Spawn(mapLink);
+                            
+                        }
                         }
                     }
                     else
                     {
-                        // --- UPDATED: Button now calls the action to switch tabs ---
                         if (ImGui.Button($"Find Spawn Points##{source.Name}{source.Location}"))
                         {
                             switchToSearchTab(source.Name);

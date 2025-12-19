@@ -2,10 +2,13 @@ using BeastieBuddy.Data;
 using BeastieBuddy.VfxSystem;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
@@ -15,10 +18,8 @@ using System.Numerics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using static Dalamud.Interface.Utility.Raii.ImRaii;
 using MapLinkPayload = Dalamud.Game.Text.SeStringHandling.Payloads.MapLinkPayload;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace BeastieBuddy.Windows
 {
@@ -72,7 +73,6 @@ namespace BeastieBuddy.Windows
 
             this.blueMageUI = new BlueMageUI(this.gameGui, this.dataManager, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
 
-            // Load image data into memory once
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "BeastieBuddy.icon.png";
             try
@@ -103,22 +103,26 @@ namespace BeastieBuddy.Windows
 
         private unsafe void OpenMapSafe(uint territoryId, uint mapId, float x, float y)
         {
+            var mapLink = new MapLinkPayload(territoryId, mapId, x, y);
+
             try
             {
                 var agent = AgentMap.Instance();
                 if (agent != null)
                 {
-                    agent->SetFlagMapMarker(territoryId, mapId, x, y, 60561);
+                    float flagX = mapLink.RawX / 1000.0f;
+                    float flagY = mapLink.RawY / 1000.0f;
+
+                    agent->FlagMarkerCount = 0;
+                    agent->SetFlagMapMarker(territoryId, mapId, flagX, flagY, 60561);
                     agent->OpenMap(mapId, territoryId, null, FFXIVClientStructs.FFXIV.Client.UI.Agent.MapType.FlagMarker);
                 }
             }
             catch (Exception ex)
             {
-                Plugin.Log.Error(ex, "[BeastieBuddy] AgentMap native open failed.");
+                Plugin.Log.Error(ex, "[BeastieBuddy] MainWindow AgentMap failed.");
             }
-
-            var payload = new MapLinkPayload(territoryId, mapId, x, y);
-            beaconController.Spawn(payload);
+            beaconController.Spawn(mapLink);
         }
         public void Dispose()
         {
@@ -143,7 +147,6 @@ namespace BeastieBuddy.Windows
 
         public override void Draw()
         {
-            // --- UPDATED: Simplified tab switching logic ---
             if (ImGui.BeginTabBar("##MainTabs"))
             {
                 ImGuiTabItemFlags beastieFlags = ImGuiTabItemFlags.None;
@@ -200,11 +203,9 @@ namespace BeastieBuddy.Windows
                 var globalScale = ImGui.GetIO().FontGlobalScale;
                 var imageSize = new Vector2(250, 250) * globalScale;
 
-                // Get the available space *after* the search bar has been drawn
                 var contentStartPos = ImGui.GetCursorScreenPos();
                 var contentSize = ImGui.GetContentRegionAvail();
 
-                // Center the image within that available space
                 var imagePos = contentStartPos + (contentSize - imageSize) * 0.5f;
 
                 ImGui.GetWindowDrawList().AddImage(backgroundTexture.Handle, imagePos, imagePos + imageSize, Vector2.Zero, Vector2.One, 0x80FFFFFF);

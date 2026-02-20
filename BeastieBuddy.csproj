@@ -15,6 +15,7 @@
         <PackageProjectUrl>https://github.com/rail2025/BeastieBuddy</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
+        <AcceptsFeedback>false</AcceptsFeedback>
     </PropertyGroup>
 
     <PropertyGroup>

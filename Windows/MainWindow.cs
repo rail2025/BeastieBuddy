@@ -144,7 +144,31 @@ namespace BeastieBuddy.Windows
             backgroundTexture?.Dispose();
             backgroundTexture = null;
         }
+        private string GetFooterMessage()
+        {
+            var count = plugin.Configuration.LifetimeSearchCount;
+            var timeSaved = count * 1.0f; // 1 minute per search
 
+            var ranks = new[] { "Sprout Scout", "Senior Tracker", "Master Hunter", "Beastie Buddy" };
+            var rank = count switch
+            {
+                < 50 => ranks[0],
+                < 150 => ranks[1],
+                < 500 => ranks[2],
+                _ => ranks[3]
+            };
+
+            var messages = new List<string>
+            {
+                $"Rank: {rank} ({count} Mobs Found!)",
+                $"Time Saved: ~{timeSaved / 60:F1} Hours"
+            };
+
+            if (count > 50) messages.Add("Loving the plugin? Support me on Ko-fi!");
+
+            var index = (int)(ImGui.GetTime() / 60.0) % messages.Count;
+            return messages[index];
+        }
         public override void Draw()
         {
             if (ImGui.BeginTabBar("##MainTabs"))
@@ -213,7 +237,9 @@ namespace BeastieBuddy.Windows
 
             ImGui.Separator();
 
-            if (ImGui.BeginChild("##scrolling_region"))
+            var footerHeight = ImGui.GetTextLineHeightWithSpacing() + ImGui.GetStyle().ItemSpacing.Y + 10;
+
+            if (ImGui.BeginChild("##scrolling_region", new Vector2(0, -footerHeight)))
             {
                 if (isSearching)
                 {
@@ -233,6 +259,8 @@ namespace BeastieBuddy.Windows
                             {
                                 if (zoneNameToIds.TryGetValue(mob.Zone, out var ids))
                                 {
+                                    plugin.Configuration.LifetimeSearchCount++;
+                                    plugin.Configuration.Save();
                                     OpenMapSafe(ids.TerritoryTypeID, ids.MapID, (float)mob.X, (float)mob.Y);
                                 }
                             }
@@ -255,6 +283,16 @@ namespace BeastieBuddy.Windows
                 }
             }
             ImGui.EndChild();
+            ImGui.Separator();
+            var footerText = GetFooterMessage();
+            var windowWidth = ImGui.GetWindowSize().X;
+            var textSize = ImGui.CalcTextSize(footerText).X;
+
+            ImGui.SetCursorPosX((windowWidth - textSize) * 0.5f);
+            if (footerText.Contains("Ko-fi"))
+                ImGui.TextColored(new Vector4(0.5f, 1.0f, 0.5f, 1.0f), footerText);
+            else
+                ImGui.TextDisabled(footerText);
         }
 
         private void DebouncedSearch()

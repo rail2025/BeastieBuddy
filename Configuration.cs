@@ -15,7 +15,7 @@ public class Configuration : IPluginConfiguration
     public float StarMinDistance { get; set; } = 2.0f;
     public float StarHeightOffset { get; set; } = 2.5f;
     public float RefreshInterval { get; set; } = 2.0f;
-
+    public int LifetimeSearchCount { get; set; } = 0;
     public bool IsConfigWindowMovable { get; set; } = true;
     //public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
 

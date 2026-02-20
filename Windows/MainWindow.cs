@@ -146,28 +146,10 @@ namespace BeastieBuddy.Windows
         }
         private string GetFooterMessage()
         {
-            var count = plugin.Configuration.LifetimeSearchCount;
-            var timeSaved = count * 1.0f; // 1 minute per search
+            if (isSearching) return "Searching...";
+            if (string.IsNullOrEmpty(serverClient.LastMessage)) return "Search for a beastie to get tips!";
 
-            var ranks = new[] { "Sprout Scout", "Senior Tracker", "Master Hunter", "Beastie Buddy" };
-            var rank = count switch
-            {
-                < 50 => ranks[0],
-                < 150 => ranks[1],
-                < 500 => ranks[2],
-                _ => ranks[3]
-            };
-
-            var messages = new List<string>
-            {
-                $"Rank: {rank} ({count} Mobs Found!)",
-                $"Time Saved: ~{timeSaved / 60:F1} Hours"
-            };
-
-            if (count > 50) messages.Add("Loving the plugin? Support me on Ko-fi!");
-
-            var index = (int)(ImGui.GetTime() / 60.0) % messages.Count;
-            return messages[index];
+            return serverClient.LastMessage;
         }
         public override void Draw()
         {
@@ -259,8 +241,6 @@ namespace BeastieBuddy.Windows
                             {
                                 if (zoneNameToIds.TryGetValue(mob.Zone, out var ids))
                                 {
-                                    plugin.Configuration.LifetimeSearchCount++;
-                                    plugin.Configuration.Save();
                                     OpenMapSafe(ids.TerritoryTypeID, ids.MapID, (float)mob.X, (float)mob.Y);
                                 }
                             }
@@ -285,14 +265,45 @@ namespace BeastieBuddy.Windows
             ImGui.EndChild();
             ImGui.Separator();
             var footerText = GetFooterMessage();
-            var windowWidth = ImGui.GetWindowSize().X;
-            var textSize = ImGui.CalcTextSize(footerText).X;
+            var wrapPosX = ImGui.GetWindowContentRegionMax().X;
+            var words = footerText.Split(' ');
+            var rareColor = new Vector4(1.0f, 0.84f, 0.0f, 1.0f);
+            var kofiColor = new Vector4(0.5f, 1.0f, 0.5f, 1.0f);
 
-            ImGui.SetCursorPosX((windowWidth - textSize) * 0.5f);
-            if (footerText.Contains("Ko-fi"))
-                ImGui.TextColored(new Vector4(0.5f, 1.0f, 0.5f, 1.0f), footerText);
-            else
-                ImGui.TextDisabled(footerText);
+            ImGui.SetCursorPosX(ImGui.GetStyle().WindowPadding.X);
+
+            for (int i = 0; i < words.Length; i++)
+            {
+                string word = words[i];
+                float wordWidth = ImGui.CalcTextSize(word).X;
+
+                if (i > 0)
+                {
+                    ImGui.SameLine();
+                    if (ImGui.GetCursorPosX() + wordWidth >= wrapPosX)
+                    {
+                        ImGui.NewLine();
+                    }
+                }
+
+                if (word.Contains("[Ko-fi]"))
+                {
+                    ImGui.TextColored(kofiColor, word);
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                        if (ImGui.IsItemClicked())
+                            Dalamud.Utility.Util.OpenLink("https://ko-fi.com/rail2025");
+                    }
+                }
+                else
+                {
+                    if (serverClient.IsLastMessageRare)
+                        ImGui.TextColored(rareColor, word);
+                    else
+                        ImGui.TextDisabled(word);
+                }
+            }
         }
 
         private void DebouncedSearch()

@@ -10,8 +10,18 @@ using System.Threading.Tasks;
 
 namespace BeastieBuddy.Windows
 {
+    public class ServerResponseWrapper 
+    {
+        [JsonProperty("results")] public List<MobData> Results { get; set; } = new();
+        [JsonProperty("message")] public string Message { get; set; } = string.Empty;
+        [JsonProperty("is_rare")] public bool IsRare { get; set; }
+    }
+
     public class ServerClient : IDisposable
     {
+        public string LastMessage { get; private set; } = string.Empty;
+        public bool IsLastMessageRare { get; private set; }
+
         private readonly HttpClient httpClient;
         private bool useBackupServer = false;
         private bool isRenderServerWarmedUp = false;
@@ -64,7 +74,14 @@ namespace BeastieBuddy.Windows
                     }
 
                     var json = await response.Content.ReadAsStringAsync(cancellationToken);
-                    return JsonConvert.DeserializeObject<List<MobData>>(json);
+                    var wrapper = JsonConvert.DeserializeObject<ServerResponseWrapper>(json);
+
+                    if (wrapper != null)
+                    {
+                        LastMessage = wrapper.Message;
+                        IsLastMessageRare = wrapper.IsRare;
+                        return wrapper.Results;
+                    }
                 }
             }
             catch (TaskCanceledException)

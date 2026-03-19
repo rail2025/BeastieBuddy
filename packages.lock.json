@@ -4,9 +4,9 @@
     "net10.0-windows7.0": {
       "DalamudPackager": {
         "type": "Direct",
-        "requested": "[14.0.1, )",
-        "resolved": "14.0.1",
-        "contentHash": "y0WWyUE6dhpGdolK3iKgwys05/nZaVf4ZPtIjpLhJBZvHxkkiE23zYRo7K7uqAgoK/QvK5cqF6l3VG5AbgC6KA=="
+        "requested": "[14.0.2, )",
+        "resolved": "14.0.2",
+        "contentHash": "dQJeq+8eyHzra4Cg5eZ/3LAeS3/UpvvLriYJGSncMK9LqJ7Q4B6jwcOsxo3PfxVd15xj+IzVFxkPqIBmPQu8/w=="
       },
       "DotNet.ReproducibleBuilds": {
         "type": "Direct",
@@ -16,9 +16,9 @@
       },
       "Lumina": {
         "type": "Direct",
-        "requested": "[7.1.0, )",
-        "resolved": "7.1.0",
-        "contentHash": "7zjreOpMXOhf+m5uTefoLZO6Mt3y68XhK036eDOS5JJ8yuIjAgFteWkzdCRcss8+PH5skMnDMDUZoTJJefQCtg==",
+        "requested": "[7.3.0, )",
+        "resolved": "7.3.0",
+        "contentHash": "VGBF/2TjXR4uKYqbTFa3oqHNG7gHvXfhKTSj6PQk2pmL/RZcsmNrFpBO/bhARg0mN3J3slLD95UFPruMkScutw==",
         "dependencies": {
           "BCnEncoder.Net": "2.2.1",
           "Microsoft.Extensions.ObjectPool": "10.0.0"
@@ -26,22 +26,22 @@
       },
       "Lumina.Excel": {
         "type": "Direct",
-        "requested": "[7.4.1, )",
-        "resolved": "7.4.1",
-        "contentHash": "j8MeFA8MFFhXOrhfMrmTJAyIzwLVMF/52hujG00sFEYCLb25AFW8NhkiG8O1PLksdkeTnEvirNSfD5sPXBcTrg==",
+        "requested": "[7.4.3, )",
+        "resolved": "7.4.3",
+        "contentHash": "3FXHgq3ihk3yLSriYjM5j+w/114i/rawAbt7+O9LMFHyY0fGVIP+MOpQaLa1CruEOXjwmT9CvLKkDy4h1ESDlA==",
         "dependencies": {
           "Lumina": "7.1.0"
         }
       },
       "LuminaSupplemental.Excel": {
         "type": "Direct",
-        "requested": "[3.1.0, )",
-        "resolved": "3.1.0",
-        "contentHash": "U55v3kpjKXLe5uQ6Su7WFVnY1G382kZzPg/Z/mhVF3K758rStLUvrXDLL0x5CLFQHK2fTU2dCx3BHVXsMUySaw==",
+        "requested": "[4.2.1, )",
+        "resolved": "4.2.1",
+        "contentHash": "U6SyxbITCefBqq+jzdWd6BDGO68zh55hewEqfxpdSMjxUC6q0162AmF75FbbN8zkSJA6/jiyyl1bQeQRIQRxzg==",
         "dependencies": {
-          "CSVFile": "3.2.0",
+          "CSVFile": "3.2.1",
           "CsvHelper": "30.0.1",
-          "Sylvan.Data.Csv": "1.3.9"
+          "Sylvan.Data.Csv": "1.4.3"
         }
       },
       "Newtonsoft.Json": {
@@ -87,8 +87,8 @@
       },
       "CSVFile": {
         "type": "Transitive",
-        "resolved": "3.2.0",
-        "contentHash": "sEVTg2rdBomJbh5bKCQqBtTgA0ojnkMab/hGwQ73UWy20n8jcJTLZ2dDKmnKPD0kTHMEeJK9TXpCgHn+RMcBYg=="
+        "resolved": "3.2.1",
+        "contentHash": "hXWPP7BGA8DS+UxdDEjAsLPdo6OUiCdaCiprxuRxpTy3nwI9DqwNWxaC5imfyD3kCb9/S2mW35s7f08uaokTUA=="
       },
       "CsvHelper": {
         "type": "Transitive",
@@ -107,8 +107,8 @@
       },
       "Sylvan.Data.Csv": {
         "type": "Transitive",
-        "resolved": "1.3.9",
-        "contentHash": "ej6VghLaUn5/GK6jGFvd5aHn3Wue+Yp2tpmyI507PBRb/lFA6WAPS+3yKGr5wtFzh0zaE53CnCxhjc0ZW8xu3g=="
+        "resolved": "1.4.3",
+        "contentHash": "ZUFTqs5doO9aGrR2g0tjASSfxaMUnsxRBXCYFvDRn74XfIc0PUZ0FYRbI3Yu/4W/IFc/DBKH30OOeZ2xGqGyFQ=="
       }
     }
   }

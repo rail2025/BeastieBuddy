@@ -102,7 +102,7 @@ public unsafe class BeaconController : IDisposable
             return;
         }
 
-        var player = BeastieBuddy.Plugin.ClientState.LocalPlayer;
+        var player = BeastieBuddy.Plugin.ObjectTable.LocalPlayer;
         if (player == null) return;
 
         var targetPos = ConvertToWorld(ActiveTarget);

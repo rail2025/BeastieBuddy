@@ -14,30 +14,11 @@
         "resolved": "1.2.39",
         "contentHash": "fcFN01tDTIQqDuTwr1jUQK/geofiwjG5DycJQOnC72i1SsLAk1ELe+apBOuZ11UMQG8YKFZG1FgvjZPbqHyatg=="
       },
-      "Lumina": {
-        "type": "Direct",
-        "requested": "[7.3.0, )",
-        "resolved": "7.3.0",
-        "contentHash": "VGBF/2TjXR4uKYqbTFa3oqHNG7gHvXfhKTSj6PQk2pmL/RZcsmNrFpBO/bhARg0mN3J3slLD95UFPruMkScutw==",
-        "dependencies": {
-          "BCnEncoder.Net": "2.2.1",
-          "Microsoft.Extensions.ObjectPool": "10.0.0"
-        }
-      },
-      "Lumina.Excel": {
-        "type": "Direct",
-        "requested": "[7.4.3, )",
-        "resolved": "7.4.3",
-        "contentHash": "3FXHgq3ihk3yLSriYjM5j+w/114i/rawAbt7+O9LMFHyY0fGVIP+MOpQaLa1CruEOXjwmT9CvLKkDy4h1ESDlA==",
-        "dependencies": {
-          "Lumina": "7.1.0"
-        }
-      },
       "LuminaSupplemental.Excel": {
         "type": "Direct",
-        "requested": "[4.2.1, )",
-        "resolved": "4.2.1",
-        "contentHash": "U6SyxbITCefBqq+jzdWd6BDGO68zh55hewEqfxpdSMjxUC6q0162AmF75FbbN8zkSJA6/jiyyl1bQeQRIQRxzg==",
+        "requested": "[4.2.2, )",
+        "resolved": "4.2.2",
+        "contentHash": "aubrbMNadiULhPUd/EntjY3WMep9p4tqBYMR0BdwRlyZI9aWQUSEQGNbfVZj/nVhxxuIg9d92dxVdRkgkj5MSw==",
         "dependencies": {
           "CSVFile": "3.2.1",
           "CsvHelper": "30.0.1",
@@ -72,19 +53,6 @@
         "resolved": "16.3.0",
         "contentHash": "SgMOdxbz8X65z8hraIs6hOEdnkH6hESTAIUa7viEngHOYaH+6q5XJmwr1+yb9vJpNQ19hCQY69xbFsLtXpobQA=="
       },
-      "BCnEncoder.Net": {
-        "type": "Transitive",
-        "resolved": "2.2.1",
-        "contentHash": "tI5+/OQo0kciLqWrViRjpOH+IL3FjexYnoWZajiGV41g/EM9CGbWsxsPzBDmpoxNkrV9uox/EtIhCIi9chBSFw==",
-        "dependencies": {
-          "CommunityToolkit.HighPerformance": "8.4.0"
-        }
-      },
-      "CommunityToolkit.HighPerformance": {
-        "type": "Transitive",
-        "resolved": "8.4.0",
-        "contentHash": "flxspiBs0G/0GMp7IK2J2ijV9bTG6hEwFc/z6ekHqB6nwRJ4Ry2yLdx+TkbCUYFCl4XhABkAwomeKbT6zM2Zlg=="
-      },
       "CSVFile": {
         "type": "Transitive",
         "resolved": "3.2.1",
@@ -94,11 +62,6 @@
         "type": "Transitive",
         "resolved": "30.0.1",
         "contentHash": "rcZtgbWR+As4G3Vpgx0AMNmShGuQLFjkHAPIIflzrfkJCx8/AOd4m96ZRmiU1Wi39qS5UVjV0P8qdgqOo5Cwyg=="
-      },
-      "Microsoft.Extensions.ObjectPool": {
-        "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "bpeCq0IYmVLACyEUMzFIOQX+zZUElG1t+nu1lSxthe7B+1oNYking7b91305+jNB6iwojp9fqTY9O+Nh7ULQxg=="
       },
       "Microsoft.IO.RecyclableMemoryStream": {
         "type": "Transitive",

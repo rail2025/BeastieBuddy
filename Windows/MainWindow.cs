@@ -2,7 +2,6 @@ using BeastieBuddy.Data;
 using BeastieBuddy.VfxSystem;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Textures.TextureWraps;

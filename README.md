@@ -1,6 +1,6 @@
 # BeastieBuddy
 Searchable bestiary for Beastmaster use in FFXIV
-<img width="640" height="640" alt="BeastieBuddy" src=<img width="256" height="256" alt="icon" src="https://github.com/user-attachments/assets/a6ee9832-b7bb-4cfe-9355-7fd706f08007" /> />
+<img width="640" height="640" alt="BeastieBuddy" src="https://github.com/user-attachments/assets/a6ee9832-b7bb-4cfe-9355-7fd706f08007" /> />
 
 <img width="1210" height="463" alt="search works" src="https://github.com/user-attachments/assets/176e0892-5eab-4ad7-bdce-a5a029399324" /> <br>
  ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/rail2025/BeastieBuddy/total) <br>

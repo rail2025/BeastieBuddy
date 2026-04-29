@@ -15,6 +15,7 @@
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
         <AcceptsFeedback>false</AcceptsFeedback>
+        <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
     </PropertyGroup>
 
     <PropertyGroup>

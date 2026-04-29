@@ -4,10 +4,10 @@
         "Name": "BeastieBuddy",
         "Punchline": "A searchable mob database with spawn locations for Beastmaster, Blue Mage, or hunts.",
         "Description": "A searchable list of all mobs and their known locations, using community data. Now includes a Blue Mage spellbook. Use /bbuddy to open.",
-        "Changelog": "v7.45.1:version matching to game patch\nv1.3.3.1:api bump, search hang fix\nv1.3.3.0: UI adjustments and data syncing improvements.\nv1.3.2.0:stats",
+        "Changelog": "v7.5.0:api bump",
         "IsHide": false,
         "InternalName": "BeastieBuddy",
-        "AssemblyVersion": "7.45.1",
+        "AssemblyVersion": "7.5.0",
         "RepoUrl": "https://github.com/rail2025/BeastieBuddy",
         "ApplicableVersion": "any",
         "Tags": [
@@ -20,10 +20,10 @@
             "blue mage",
             "spell"
         ],
-        "DalamudApiLevel": 14,
-        "DownloadLinkInstall": "https://github.com/rail2025/BeastieBuddy/releases/download/v7.45.1/latest.zip",
-        "DownloadLinkUpdate": "https://github.com/rail2025/BeastieBuddy/releases/download/v7.45.1/latest.zip",
-        "DownloadLinkTesting": "https://github.com/rail2025/BeastieBuddy/releases/download/v7.45.1/latest.zip",
+        "DalamudApiLevel": 15,
+        "DownloadLinkInstall": "https://github.com/rail2025/BeastieBuddy/releases/download/v7.5.0/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/rail2025/BeastieBuddy/releases/download/v7.5.0/latest.zip",
+        "DownloadLinkTesting": "https://github.com/rail2025/BeastieBuddy/releases/download/v7.5.0/latest.zip",
         "LoadPriority": 0,
         "SupportsProfiles": false,
         "IconUrl": "https://raw.githubusercontent.com/rail2025/BeastieBuddy/main/icon.png"

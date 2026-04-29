@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/14.0.2">
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <PropertyGroup>
         <Authors>rail</Authors>
-        <Version>7.45.1</Version>
+        <Version>7.5.0</Version>
         <AssemblyName>BeastieBuddy</AssemblyName>
         <RootNamespace>BeastieBuddy</RootNamespace>
-        <DalamudApiLevel>14</DalamudApiLevel>
         <TargetFramework>net10.0-windows</TargetFramework>
         <Platforms>x64</Platforms>
         <LangVersion>latest</LangVersion>

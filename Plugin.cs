@@ -109,9 +109,13 @@ namespace BeastieBuddy
         }
         private void OnCommand(string command, string args)
         {
-            MainWindow.IsOpen = true;
-            if (!string.IsNullOrWhiteSpace(args))
+            if (string.IsNullOrWhiteSpace(args))
             {
+                MainWindow.IsOpen = !MainWindow.IsOpen;
+            }
+            else
+            {
+                MainWindow.IsOpen = true;
                 MainWindow.SwitchToSearchTab(args.Trim());
             }
         }

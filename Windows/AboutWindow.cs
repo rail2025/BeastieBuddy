@@ -18,7 +18,7 @@ namespace BeastieBuddy.Windows
             this.plugin = plugin;
             this.SizeConstraints = new WindowSizeConstraints
             {
-                MinimumSize = new Vector2(300, 200),
+                MinimumSize = new Vector2(300, 300),
                 MaximumSize = new Vector2(800, 600)
             };
         }
@@ -27,12 +27,12 @@ namespace BeastieBuddy.Windows
 
         public override void PreDraw()
         {
-            this.Flags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
+            this.Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar;
         }
 
         public override void Draw()
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+            var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0.0";
             ImGui.Text($"Version: {version}");
             ImGui.Text("Release Date: 7/22/2025");
             ImGui.Separator();
@@ -42,7 +42,7 @@ namespace BeastieBuddy.Windows
             ImGui.Text("VFX Beacon system adapted from NorthStar by Pistachio Herald.");
             ImGui.Text("With special thanks to the Dalamud Discord community.");
             ImGui.Text("Check out my other projects on github.com/rail2025/");
-            ImGui.Text("AetherDraw, WDIGViewer, AetherBreakout, and more.");
+            ImGui.Text("AetherBlackbox, AetherDraw, OBStoABB, and more.");
 
             ImGui.Spacing();
             ImGui.Separator();

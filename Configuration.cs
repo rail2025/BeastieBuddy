@@ -17,6 +17,7 @@ public class Configuration : IPluginConfiguration
     public float RefreshInterval { get; set; } = 2.0f;
     public int LifetimeSearchCount { get; set; } = 0;
     public bool IsConfigWindowMovable { get; set; } = true;
+    public bool AutoTeleport { get; set; } = false;
     //public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
 
     [NonSerialized]

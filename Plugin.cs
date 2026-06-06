@@ -4,11 +4,15 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Dalamud.Game.Gui;
 using BeastieBuddy.VfxSystem;
 using Dalamud.Game.ClientState;
-using System.IO;
-using System.Reflection;
+using Dalamud.Plugin.Ipc;
+using Lumina.Excel.Sheets;
 
 namespace BeastieBuddy
 {
@@ -38,6 +42,8 @@ namespace BeastieBuddy
 
         public BeaconController BeaconController { get; init; }
 
+        private ICallGateSubscriber<uint, byte, bool>? _teleport;
+
         private ConfigWindow ConfigWindow { get; init; }
         private MainWindow MainWindow { get; init; }
         private AboutWindow AboutWindow { get; init; }
@@ -66,6 +72,50 @@ namespace BeastieBuddy
             PluginInterface.UiBuilder.Draw += DrawUI;
             PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
             PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
+
+            _teleport = PluginInterface.GetIpcSubscriber<uint, byte, bool>("Teleport");
+        }
+
+        public void TeleportToMob(uint territoryTypeId, float mobX, float mobY)
+        {
+            if (_teleport == null) return;
+            try
+            {
+                var aetheryteSheet = DataManager.GetExcelSheet<Aetheryte>();
+                var markerSheet = DataManager.GetSubrowExcelSheet<MapMarker>();
+                if (aetheryteSheet == null || markerSheet == null) return;
+
+                var territoryAetherytes = aetheryteSheet
+                    .Where(a => a.Territory.RowId == territoryTypeId && a.IsAetheryte)
+                    .ToDictionary(a => a.RowId);
+
+                if (!territoryAetherytes.Any()) return;
+
+                // MapMarker X/Y are raw units (0-2048), mob coords are display units (1-42)
+                // Convert marker coords to display: display = raw / 2048 * 41 + 1
+                static float ToDisplay(int raw) => raw / 2048.0f * 41.0f + 1.0f;
+
+                var markers = markerSheet
+                    .SelectMany(row => row)
+                    .Where(m => m.DataType == 3 && territoryAetherytes.ContainsKey(m.DataKey.RowId))
+                    .Select(m => new { Id = m.DataKey.RowId, DispX = ToDisplay(m.X), DispY = ToDisplay(m.Y) })
+                    .ToList();
+
+                foreach (var m in markers)
+                    Log.Debug($"[BeastieBuddy] Aetheryte {m.Id} at display ({m.DispX:F1}, {m.DispY:F1}), mob at ({mobX:F1}, {mobY:F1})");
+
+                var best = markers
+                    .OrderBy(m => Math.Sqrt(Math.Pow(m.DispX - mobX, 2) + Math.Pow(m.DispY - mobY, 2)))
+                    .Select(m => m.Id)
+                    .FirstOrDefault();
+
+                var aetheryteId = best != 0 ? best : territoryAetherytes.Keys.First();
+                _teleport.InvokeFunc(aetheryteId, 0);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[BeastieBuddy] Auto-teleport failed - is Teleporter installed?");
+            }
         }
 
         public void Dispose()

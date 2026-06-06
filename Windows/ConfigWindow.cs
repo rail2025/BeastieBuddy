@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Numerics;
 using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
@@ -14,7 +14,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(350, 220);
+        Size = new Vector2(350, 250);
         SizeCondition = ImGuiCond.Always;
 
         this.configuration = plugin.Configuration;
@@ -66,9 +66,24 @@ public class ConfigWindow : Window, IDisposable
             this.configuration.IsConfigWindowMovable = movable;
             this.configuration.Save();
         }
+        ImGui.Spacing();
+        ImGui.Text("Teleport Settings");
+        ImGui.Separator();
+
+        var autoTeleport = this.configuration.AutoTeleport;
+        if (ImGui.Checkbox("Auto Teleport on Click", ref autoTeleport))
+        {
+            this.configuration.AutoTeleport = autoTeleport;
+            save = true;
+        }
+        if (ImGui.IsItemHovered())
+            ImGui.SetTooltip("When enabled, clicking a search result will automatically teleport you to the nearest aetheryte in that zone. Requires the Teleporter plugin.");
+
         if (save)
         {
             this.configuration.Save();
         }
     }
 }
+
+

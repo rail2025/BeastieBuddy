@@ -241,6 +241,8 @@ namespace BeastieBuddy.Windows
                                 if (zoneNameToIds.TryGetValue(mob.Zone, out var ids))
                                 {
                                     OpenMapSafe(ids.TerritoryTypeID, ids.MapID, (float)mob.X, (float)mob.Y);
+                                    if (plugin.Configuration.AutoTeleport)
+                                        plugin.TeleportToMob(ids.TerritoryTypeID, (float)mob.X, (float)mob.Y);
                                 }
                             }
 

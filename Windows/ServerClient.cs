@@ -80,7 +80,7 @@ namespace BeastieBuddy.Windows
                     {
                         LastMessage = wrapper.Message;
                         IsLastMessageRare = wrapper.IsRare;
-                        return wrapper.Results;
+                        return wrapper.Results.Take(25).ToList();
                     }
                 }
             }

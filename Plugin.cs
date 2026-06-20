@@ -1,14 +1,18 @@
+using BeastieBuddy.VfxSystem;
 using BeastieBuddy.Windows;
+using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
 using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using Dalamud.Game.Gui;
-using BeastieBuddy.VfxSystem;
-using Dalamud.Game.ClientState;
+using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using Dalamud.Plugin.Ipc;
+using Lumina.Excel.Sheets;
 
 namespace BeastieBuddy
 {
@@ -38,6 +42,8 @@ namespace BeastieBuddy
 
         public BeaconController BeaconController { get; init; }
 
+        private ICallGateSubscriber<uint, byte, bool>? _teleport;
+
         private ConfigWindow ConfigWindow { get; init; }
         private MainWindow MainWindow { get; init; }
         private AboutWindow AboutWindow { get; init; }
@@ -66,6 +72,52 @@ namespace BeastieBuddy
             PluginInterface.UiBuilder.Draw += DrawUI;
             PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
             PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
+
+            _teleport = PluginInterface.GetIpcSubscriber<uint, byte, bool>("Teleport");
+        }
+
+        public void TeleportToMob(uint territoryTypeId, uint mapId, float mobX, float mobY)
+        {
+            if (_teleport == null) return;
+            try
+            {
+                var mapRow = DataManager.GetExcelSheet<Map>()?.GetRowOrDefault(mapId);
+                var aetheryteSheet = DataManager.GetExcelSheet<Aetheryte>();
+                var markerSheet = DataManager.GetSubrowExcelSheet<MapMarker>();
+
+                if (mapRow == null || aetheryteSheet == null || markerSheet == null) return;
+
+                var territoryAetherytes = aetheryteSheet
+                    .Where(a => a.Territory.RowId == territoryTypeId && a.IsAetheryte)
+                    .ToDictionary(a => a.RowId);
+
+                if (!territoryAetherytes.Any()) return;
+
+                var sizeFactor = mapRow.Value.SizeFactor;
+                var offsetX = mapRow.Value.OffsetX;
+                var offsetY = mapRow.Value.OffsetY;
+
+                static float ToMapCoord(int raw, int scale, short offset)
+                    => ((raw + offset) * 41.0f / 2048.0f / (scale / 100.0f)) + 1.0f;
+
+                var best = markerSheet[mapRow.Value.MapMarkerRange]
+                    .Where(m => m.DataType == 3 && territoryAetherytes.ContainsKey(m.DataKey.RowId))
+                    .Select(m =>
+                    {
+                        var dx = ToMapCoord(m.X, sizeFactor, offsetX) - mobX;
+                        var dy = ToMapCoord(m.Y, sizeFactor, offsetY) - mobY;
+                        return new { Id = m.DataKey.RowId, DistSq = dx * dx + dy * dy };
+                    })
+                    .OrderBy(m => m.DistSq)
+                    .FirstOrDefault();
+
+                var aetheryteId = best != null ? best.Id : territoryAetherytes.Keys.First();
+                _teleport.InvokeFunc(aetheryteId, 0);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(ex, "[BeastieBuddy] Auto-teleport IPC call failed");
+            }
         }
 
         public void Dispose()

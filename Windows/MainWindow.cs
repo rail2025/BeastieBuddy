@@ -27,7 +27,9 @@ namespace BeastieBuddy.Windows
         // Beastie Search
         private string searchText = string.Empty;
         private List<MobData> searchResults = new();
+        private List<ClusteredMob> clusteredResults = new();
         private bool isSearching = false;
+        private record ClusteredMob(string Name, string Zone, float X, float Y, int Count, MobData OriginalMob);
         private CancellationTokenSource? searchCancellationTokenSource;
         private readonly ServerClient serverClient;
         private readonly Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds = new();
@@ -234,13 +236,15 @@ namespace BeastieBuddy.Windows
                     }
                     else
                     {
-                        foreach (var mob in searchResults)
+                        foreach (var mob in clusteredResults)
                         {
                             if (mob != null && ImGui.Selectable($"##{mob.Name}{mob.X}{mob.Y}", false, ImGuiSelectableFlags.None, new Vector2(0, ImGui.GetTextLineHeight())))
                             {
                                 if (zoneNameToIds.TryGetValue(mob.Zone, out var ids))
                                 {
-                                    OpenMapSafe(ids.TerritoryTypeID, ids.MapID, (float)mob.X, (float)mob.Y);
+                                    OpenMapSafe(ids.TerritoryTypeID, ids.MapID, mob.OriginalMob.X, mob.OriginalMob.Y);
+                                    if (plugin.Configuration.AutoTeleport)
+                                        plugin.TeleportToMob(ids.TerritoryTypeID, ids.MapID, (float)mob.X, (float)mob.Y);
                                 }
                             }
 
@@ -251,7 +255,7 @@ namespace BeastieBuddy.Windows
 
                                 var locationText = (mob.X == 0 && mob.Y == 0)
                                     ? mob.Zone
-                                    : $"{mob.Zone} ({mob.X:F1}, {mob.Y:F1})";
+                                    : (mob.Count > 1 ? $"{mob.Zone} (~{mob.X:F1}, {mob.Y:F1}) [{mob.Count} locations]" : $"{mob.Zone} ({mob.X:F1}, {mob.Y:F1})");
 
                                 var locationTextSize = ImGui.CalcTextSize(locationText);
                                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - locationTextSize.X);
@@ -304,6 +308,31 @@ namespace BeastieBuddy.Windows
                 }
             }
         }
+        private void ClusterResults()
+        {
+            clusteredResults.Clear();
+            var threshold = plugin.Configuration.ClusterDistanceThreshold;
+
+            foreach (var group in searchResults.GroupBy(m => new { m.Name, m.Zone }))
+            {
+                var clusters = new List<ClusteredMob>();
+                foreach (var mob in group)
+                {
+                    var existing = clusters.FirstOrDefault(c =>
+                        Math.Abs(c.X - mob.X) <= threshold && Math.Abs(c.Y - mob.Y) <= threshold);
+
+                    if (existing != null)
+                    {
+                        clusters[clusters.IndexOf(existing)] = existing with { Count = existing.Count + 1 };
+                    }
+                    else
+                    {
+                        clusters.Add(new ClusteredMob(mob.Name, mob.Zone, mob.X, mob.Y, 1, mob));
+                    }
+                }
+                clusteredResults.AddRange(clusters);
+            }
+        }
 
         private void DebouncedSearch()
         {
@@ -327,6 +356,7 @@ namespace BeastieBuddy.Windows
                     if (results != null && !token.IsCancellationRequested)
                     {
                         searchResults = results;
+                        ClusterResults();
                     }
                 }
                 isSearching = false;

@@ -17,7 +17,10 @@ public class Configuration : IPluginConfiguration
     public float RefreshInterval { get; set; } = 2.0f;
     public int LifetimeSearchCount { get; set; } = 0;
     public bool IsConfigWindowMovable { get; set; } = true;
+    public float ClusterDistanceThreshold { get; set; } = 3.0f;
     //public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
+
+    public bool AutoTeleport { get; set; } = false;
 
     [NonSerialized]
     private IDalamudPluginInterface? pluginInterface;

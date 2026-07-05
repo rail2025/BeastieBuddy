@@ -1,6 +1,7 @@
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
+using System.Collections.Generic;
 
 namespace BeastieBuddy;
 
@@ -21,6 +22,7 @@ public class Configuration : IPluginConfiguration
     //public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
 
     public bool AutoTeleport { get; set; } = false;
+    public HashSet<int> TamedBeasts { get; set; } = new();
 
     [NonSerialized]
     private IDalamudPluginInterface? pluginInterface;

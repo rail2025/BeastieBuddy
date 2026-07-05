@@ -36,6 +36,8 @@ namespace BeastieBuddy.Windows
 
         // Blue Mage UI
         private readonly BlueMageUI blueMageUI;
+        private readonly BestiaryUI bestiaryUI;
+        private readonly BestiaryManager bestiaryManager;
         private readonly IDataManager dataManager;
         private readonly Plugin plugin;
         private readonly IGameGui gameGui;
@@ -73,6 +75,9 @@ namespace BeastieBuddy.Windows
             }
 
             this.blueMageUI = new BlueMageUI(this.gameGui, this.dataManager, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
+            this.bestiaryManager = new BestiaryManager(this.serverClient);
+            _ = this.bestiaryManager.InitializeAsync(CancellationToken.None);
+            this.bestiaryUI = new BestiaryUI(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration);
 
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "BeastieBuddy.icon.png";
@@ -170,6 +175,11 @@ namespace BeastieBuddy.Windows
                 if (ImGui.BeginTabItem("Blue Mage Spellbook"))
                 {
                     blueMageUI.Draw();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Beastmaster Bestiary"))
+                {
+                    bestiaryUI.Draw();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();

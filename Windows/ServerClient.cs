@@ -1,5 +1,3 @@
-// BeastieBuddy/Windows/ServerClient.cs
-
 using BeastieBuddy.Data;
 using Newtonsoft.Json;
 using System;
@@ -101,7 +99,38 @@ namespace BeastieBuddy.Windows
             }
             return new List<MobData>(); // Return empty list on failure
         }
+        public async Task<(string json, string etag)?> GetBestiaryAsync(string currentETag, System.Threading.CancellationToken cancellationToken)
+        {
+            var primaryUrl = useBackupServer ? RenderUrl : CloudflareUrl;
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{primaryUrl}/beastiebuddy/bestiary.json");
 
+            if (!string.IsNullOrEmpty(currentETag))
+            {
+                request.Headers.IfNoneMatch.ParseAdd(currentETag);
+            }
+
+            try
+            {
+                var response = await httpClient.SendAsync(request, cancellationToken);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+                {
+                    return null;
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var etag = response.Headers.ETag?.Tag ?? string.Empty;
+                    return (json, etag);
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "Failed to fetch bestiary from server.");
+            }
+            return null;
+        }
         public void Dispose()
         {
             httpClient.Dispose();

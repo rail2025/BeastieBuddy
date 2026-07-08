@@ -77,7 +77,7 @@ namespace BeastieBuddy.Windows
             this.blueMageUI = new BlueMageUI(this.gameGui, this.dataManager, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
             this.bestiaryManager = new BestiaryManager(this.serverClient);
             _ = this.bestiaryManager.InitializeAsync(CancellationToken.None);
-            this.bestiaryUI = new BestiaryUI(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration);
+            this.bestiaryUI = new BestiaryUI(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration, this.textureProvider);
 
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "BeastieBuddy.icon.png";
@@ -135,6 +135,7 @@ namespace BeastieBuddy.Windows
             searchCancellationTokenSource?.Dispose();
             serverClient.Dispose();
             backgroundTexture?.Dispose();
+            bestiaryUI.Dispose();
         }
 
         public override void OnOpen()
@@ -177,8 +178,31 @@ namespace BeastieBuddy.Windows
                     blueMageUI.Draw();
                     ImGui.EndTabItem();
                 }
-                if (ImGui.BeginTabItem("Beastmaster Bestiary"))
+                if (ImGui.BeginTabItem("Bestiary"))
                 {
+                    if (ImGui.IsItemHovered())
+                    {
+                        double time = ImGui.GetTime() * 4.0;
+                        int phase = (int)(Math.Floor(time) % 3);
+                        float t = (float)(time - Math.Floor(time));
+
+                        Vector4 c1, c2;
+                        if (phase == 0) { c1 = new Vector4(0.0f, 1.0f, 0.0f, 1.0f); c2 = new Vector4(1.0f, 0.5f, 0.0f, 1.0f); }
+                        else if (phase == 1) { c1 = new Vector4(1.0f, 0.5f, 0.0f, 1.0f); c2 = new Vector4(1.0f, 0.0f, 0.0f, 1.0f); }
+                        else { c1 = new Vector4(1.0f, 1.0f, 1.0f, 1.0f); c2 = new Vector4(0.0f, 1.0f, 0.0f, 1.0f); }
+
+                        Vector4 pulseColor = new Vector4(
+                            c1.X + (c2.X - c1.X) * t,
+                            c1.Y + (c2.Y - c1.Y) * t,
+                            c1.Z + (c2.Z - c1.Z) * t,
+                            1.0f
+                        );
+
+                        ImGui.PushStyleColor(ImGuiCol.PopupBg, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
+                        ImGui.PushStyleColor(ImGuiCol.Text, pulseColor);
+                        ImGui.SetTooltip("Please leave feedback on the GitHub issues page for your preferred layout (List vs Cards)!");
+                        ImGui.PopStyleColor(2);
+                    }
                     bestiaryUI.Draw();
                     ImGui.EndTabItem();
                 }

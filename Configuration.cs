@@ -22,6 +22,7 @@ public class Configuration : IPluginConfiguration
     //public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
 
     public bool AutoTeleport { get; set; } = false;
+    public bool UseCardLayout { get; set; } = false;
     public HashSet<int> TamedBeasts { get; set; } = new();
 
     [NonSerialized]

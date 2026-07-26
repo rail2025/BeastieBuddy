@@ -34,9 +34,23 @@ namespace BeastieBuddy.Windows
         private readonly ServerClient serverClient;
         private readonly Dictionary<string, (uint TerritoryTypeID, uint MapID)> zoneNameToIds = new();
 
+        //for bestiary search
+        internal IReadOnlyList<MobData> Results => searchResults;
+
+        internal async System.Threading.Tasks.Task SearchAsync(string query)
+        {
+            var results = await serverClient.SearchAsync(query, System.Threading.CancellationToken.None);
+            if (results != null)
+            {
+                searchResults = results;
+                ClusterResults();
+            }
+        }
+
         // Blue Mage UI
         private readonly BlueMageUI blueMageUI;
         private readonly BestiaryUI bestiaryUI;
+        private readonly BestiaryUIV2 bestiaryUIV2;
         private readonly BestiaryManager bestiaryManager;
         private readonly IDataManager dataManager;
         private readonly Plugin plugin;
@@ -78,6 +92,7 @@ namespace BeastieBuddy.Windows
             this.bestiaryManager = new BestiaryManager(this.serverClient);
             _ = this.bestiaryManager.InitializeAsync(CancellationToken.None);
             this.bestiaryUI = new BestiaryUI(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration, this.textureProvider);
+            this.bestiaryUIV2 = new BestiaryUIV2(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration, this.textureProvider);
 
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "BeastieBuddy.icon.png";
@@ -136,6 +151,7 @@ namespace BeastieBuddy.Windows
             serverClient.Dispose();
             backgroundTexture?.Dispose();
             bestiaryUI.Dispose();
+            bestiaryUIV2.Dispose();
         }
 
         public override void OnOpen()
@@ -204,6 +220,11 @@ namespace BeastieBuddy.Windows
                         ImGui.PopStyleColor(2);
                     }
                     bestiaryUI.Draw();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Bestiary V2"))
+                {
+                    bestiaryUIV2.Draw();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();

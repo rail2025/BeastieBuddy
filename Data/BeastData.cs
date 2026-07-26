@@ -17,15 +17,16 @@ namespace BeastieBuddy.Data
         public string Name { get; set; } = "Unknown";
         public string Location { get; set; } = "Unknown";
         public string AutoAttackElement { get; set; } = "Unknown";
+        public string Classification { get; set; } = "Unknown";
         public BeastSkill Trick { get; set; } = new();
 
         [JsonProperty("TemperedRelease")]
         public BeastSkill TemperedRelease { get; set; } = new();
 
-        [JsonProperty("Nature's Gift")]
-        public BeastSkill NaturesGift { get; set; } = new();
+        [JsonProperty("Borrow")]
+        public BeastSkill Borrow { get; set; } = new();
 
-        public BeastSkill Finisher { get; set; } = new();
+        public BeastSkill PartingBlow { get; set; } = new();
     }
 
     public class BestiaryResponse

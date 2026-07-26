@@ -18,9 +18,10 @@ namespace BeastieBuddy.Windows
         private readonly Dictionary<string, Dalamud.Interface.Textures.TextureWraps.IDalamudTextureWrap> iconCache = new();
 
         private string filterText = string.Empty;
-        private int currentElementIndex = 0;
-        private readonly string[] elements = { "All", "Earth", "Fire", "Ice", "Lightning", "Water", "Wind" };
-
+        private readonly string[] filterElements = { "Fire", "Ice", "Wind", "Earth", "Lightning", "Water", "Slashing", "Blunt", "Piercing" };
+        private readonly string[] filterClassifications = { "Beastkin", "Vilekin", "Cloudkin", "Seedkin", "Wavekin", "Scalekin", "Soulkin", "Ashkin" };
+        private readonly string[] filterStatus = { "Slow", "Paralyze", "Silence", "Interrupt", "Blind", "Knockdown", "Sleep", "Bind", "Heavy", "Doom", "Death", "Poison", "Paralysis" }; 
+        private readonly HashSet<string> activeFilters = new(); 
         private KeyValuePair<int, BeastData>? selectedBeast = null;
         private int currentPage = 0;
         private const int itemsPerPage = 25;
@@ -83,10 +84,54 @@ namespace BeastieBuddy.Windows
             ImGui.SetNextItemWidth(100 * scale);
             ImGui.InputTextWithHint("##filter", "Filter...", ref filterText, 100);
             ImGui.SameLine();
-            ImGui.Text("Element:");
+            ImGui.Text("Filters:");
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(100 * scale);
-            ImGui.Combo("##elementFilter", ref currentElementIndex, elements, elements.Length);
+            if (ImGui.Button(activeFilters.Count > 0 ? $"Filters ({activeFilters.Count})###filterBtn" : "Filters...###filterBtn"))
+            {
+                ImGui.OpenPopup("FilterPopup");
+            }
+
+            if (ImGui.BeginPopup("FilterPopup"))
+            {
+                if (ImGui.BeginTable("FilterTable", 3, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
+                {
+                    ImGui.TableSetupColumn("Elements");
+                    ImGui.TableSetupColumn("Classifications");
+                    ImGui.TableSetupColumn("Status");
+                    ImGui.TableHeadersRow();
+
+                    ImGui.TableNextRow();
+
+                    ImGui.TableNextColumn();
+                    foreach (var opt in filterElements)
+                    {
+                        bool isSel = activeFilters.Contains(opt);
+                        if (ImGui.Checkbox(opt, ref isSel)) { if (isSel) activeFilters.Add(opt); else activeFilters.Remove(opt); }
+                    }
+
+                    ImGui.TableNextColumn();
+                    foreach (var opt in filterClassifications)
+                    {
+                        bool isSel = activeFilters.Contains(opt);
+                        if (ImGui.Checkbox(opt, ref isSel)) { if (isSel) activeFilters.Add(opt); else activeFilters.Remove(opt); }
+                    }
+
+                    ImGui.TableNextColumn();
+                    foreach (var opt in filterStatus)
+                    {
+                        bool isSel = activeFilters.Contains(opt);
+                        if (ImGui.Checkbox(opt, ref isSel)) { if (isSel) activeFilters.Add(opt); else activeFilters.Remove(opt); }
+                    }
+                    ImGui.EndTable();
+                }
+
+                ImGui.Separator();
+                if (ImGui.Button("Reset All")) activeFilters.Clear();
+                ImGui.SameLine();
+                if (ImGui.Button("Apply/Close")) ImGui.CloseCurrentPopup();
+
+                ImGui.EndPopup();
+            }
             ImGui.Separator();
 
             var filteredBeasts = new List<KeyValuePair<int, BeastData>>();
@@ -97,9 +142,30 @@ namespace BeastieBuddy.Windows
                 if (!string.IsNullOrEmpty(filterLower) && !beast.Name.ToLower().Contains(filterLower))
                     continue;
 
-                string selectedElement = elements[currentElementIndex];
-                if (selectedElement != "All" && !string.Equals(beast.AutoAttackElement, selectedElement, StringComparison.OrdinalIgnoreCase))
-                    continue;
+                if (activeFilters.Count > 0)
+                {
+                    bool matchFound = false;
+                    foreach (var filter in activeFilters)
+                    {
+                        if (string.Equals(beast.AutoAttackElement, filter, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(beast.Classification, filter, StringComparison.OrdinalIgnoreCase))
+                        {
+                            matchFound = true;
+                            break;
+                        }
+
+                        string fLower = filter.ToLower();
+                        if ((beast.Trick.Effect != null && beast.Trick.Effect.ToLower().Contains(fLower)) ||
+                            (beast.TemperedRelease.Effect != null && beast.TemperedRelease.Effect.ToLower().Contains(fLower)) ||
+                            (beast.Borrow.Effect != null && beast.Borrow.Effect.ToLower().Contains(fLower)) ||
+                            (beast.PartingBlow.Effect != null && beast.PartingBlow.Effect.ToLower().Contains(fLower)))
+                        {
+                            matchFound = true;
+                            break;
+                        }
+                    }
+                    if (!matchFound) continue;
+                }
 
                 filteredBeasts.Add(kvp);
             }
@@ -255,7 +321,8 @@ namespace BeastieBuddy.Windows
 
                             ImGui.Text($"No. {selectedBeast.Value.Key:D2} {beast.Name}");
                             ImGui.Separator();
-                            ImGui.Text($"Location: {beast.Location}");
+                            ImGui.Text($"Location: {beast.Location}"); 
+                            ImGui.Text($"Classification: {beast.Classification}");
                             ImGui.Text($"Auto-Attack: {beast.AutoAttackElement}");
 
                             ImGui.Spacing();
@@ -268,16 +335,16 @@ namespace BeastieBuddy.Windows
                             ImGui.Text("Abilities:");
 
                             string trickElement = string.Empty;
-                            foreach (var el in elements)
+                            foreach (var el in filterElements)
                             {
-                                if (el != "All" && beast.Trick.Element.Contains(el, StringComparison.OrdinalIgnoreCase))
+                                if (beast.Trick.Element.Contains(el, StringComparison.OrdinalIgnoreCase))
                                 {
                                     trickElement = el.ToLower();
                                     break;
                                 }
                             }
 
-                            if (!string.IsNullOrEmpty(trickElement))
+                        if (!string.IsNullOrEmpty(trickElement))
                             {
                                 var trickIcon = GetTextureWrap($"trick_{trickElement}");
                                 if (trickIcon != null)
@@ -300,13 +367,13 @@ namespace BeastieBuddy.Windows
                             if (!string.IsNullOrEmpty(beast.TemperedRelease.Effect) && beast.TemperedRelease.Effect != "Unknown")
                                 ImGui.TextWrapped($"  > {beast.TemperedRelease.Effect}");
 
-                            ImGui.Text($"[Nature's Gift] {beast.NaturesGift.Name}");
-                            if (!string.IsNullOrEmpty(beast.NaturesGift.Effect) && beast.NaturesGift.Effect != "Unknown")
-                                ImGui.TextWrapped($"  > {beast.NaturesGift.Effect}");
+                            ImGui.Text($"[Borrow] {beast.Borrow.Name}");
+                            if (!string.IsNullOrEmpty(beast.Borrow.Effect) && beast.Borrow.Effect != "Unknown")
+                                ImGui.TextWrapped($"  > {beast.Borrow.Effect}");
 
-                            ImGui.Text($"[Finisher] {beast.Finisher.Name}");
-                            if (!string.IsNullOrEmpty(beast.Finisher.Effect) && beast.Finisher.Effect != "Unknown")
-                                ImGui.TextWrapped($"  > {beast.Finisher.Effect}");
+                            ImGui.Text($"[Parting Blow] {beast.PartingBlow.Name}");
+                            if (!string.IsNullOrEmpty(beast.PartingBlow.Effect) && beast.PartingBlow.Effect != "Unknown")
+                                ImGui.TextWrapped($"  > {beast.PartingBlow.Effect}");
                         }
                         else
                         {

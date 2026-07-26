@@ -45,7 +45,7 @@ namespace BeastieBuddy
         private ICallGateSubscriber<uint, byte, bool>? _teleport;
 
         private ConfigWindow ConfigWindow { get; init; }
-        private MainWindow MainWindow { get; init; }
+        internal MainWindow MainWindow { get; init; }
         private AboutWindow AboutWindow { get; init; }
 
         public Plugin()

@@ -61,7 +61,7 @@ namespace BeastieBuddy.Windows
         private IDalamudTextureWrap? backgroundTexture;
 
         private string? _tabToFocus;
-        
+
         public MainWindow(Plugin plugin, IGameGui gameGui, ITextureProvider textureProvider, IDataManager dataManager, BeaconController beaconController) : base("BeastieBuddy##MainWindow")
         {
             this.plugin = plugin;
@@ -180,7 +180,7 @@ namespace BeastieBuddy.Windows
             {
                 ImGuiTabItemFlags beastieFlags = ImGuiTabItemFlags.None;
                 if (_tabToFocus == "Beastie Search")
-                    {
+                {
                     beastieFlags = ImGuiTabItemFlags.SetSelected;
                     _tabToFocus = null; // Clear the focus request after one frame
                 }
@@ -394,29 +394,48 @@ namespace BeastieBuddy.Windows
             searchCancellationTokenSource?.Cancel();
             searchCancellationTokenSource?.Dispose();
             searchCancellationTokenSource = new CancellationTokenSource();
+
             var token = searchCancellationTokenSource.Token;
 
-            Task.Delay(250, token).ContinueWith(async _ =>
+            _ = RunDebouncedSearchAsync(token);
+        }
+
+        private async Task RunDebouncedSearchAsync(CancellationToken token)
+        {
+            try
             {
-                if (token.IsCancellationRequested) return;
+                await Task.Delay(500, token);
 
                 var currentSearchText = searchText;
+
                 if (string.IsNullOrWhiteSpace(currentSearchText))
                 {
                     searchResults.Clear();
+                    clusteredResults.Clear();
+                    isSearching = false;
+                    return;
                 }
-                else
-                {
-                    var results = await serverClient.SearchAsync(currentSearchText, token);
-                    if (results != null && !token.IsCancellationRequested)
-                    {
-                        searchResults = results;
-                        ClusterResults();
-                    }
-                }
-                isSearching = false;
 
-            }, token, TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
+                var results = await serverClient.SearchAsync(currentSearchText, token);
+
+                if (results != null && !token.IsCancellationRequested)
+                {
+                    searchResults = results;
+                    ClusterResults();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "[BeastieBuddy] Search failed");
+            }
+            finally
+            {
+                if (!token.IsCancellationRequested)
+                    isSearching = false;
+            }
         }
     }
 }

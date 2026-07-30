@@ -10,7 +10,7 @@ namespace BeastieBuddy.Windows
 {
     public class ServerResponseWrapper 
     {
-        [JsonProperty("results")] public List<MobData> Results { get; set; } = new();
+        [JsonProperty("results")] public List<MobData>? Results { get; set; } = new();
         [JsonProperty("message")] public string Message { get; set; } = string.Empty;
         [JsonProperty("is_rare")] public bool IsRare { get; set; }
     }
@@ -46,7 +46,12 @@ namespace BeastieBuddy.Windows
 
             try
             {
+                Plugin.Log.Info($"Request URL: {primaryUrl}/beastiebuddy/search?query={Uri.EscapeDataString(query)}");
                 var response = await httpClient.GetAsync($"{primaryUrl}/beastiebuddy/search?query={Uri.EscapeDataString(query)}", cancellationToken);
+
+                Plugin.Log.Info($"HTTP Status: {(int)response.StatusCode} ({response.StatusCode})");
+
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 // Check for rate-limit or other server issues
                 if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests || !response.IsSuccessStatusCode)
@@ -78,7 +83,7 @@ namespace BeastieBuddy.Windows
                     {
                         LastMessage = wrapper.Message;
                         IsLastMessageRare = wrapper.IsRare;
-                        return wrapper.Results.Take(25).ToList();
+                        return wrapper.Results?.Take(25).ToList() ?? new List<MobData>();
                     }
                 }
             }

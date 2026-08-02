@@ -9,6 +9,7 @@ namespace BeastieBuddy;
 public class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 0;
+    public string BestiaryETag { get; set; } = string.Empty;
 
     public bool IsVfxEnabled { get; set; } = true;
     // Distance settings for the BeaconController

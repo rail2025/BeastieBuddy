@@ -1,13 +1,14 @@
 using FFXIVClientStructs.FFXIV.Client.System.Resource.Handle;
 using System.Runtime.InteropServices;
+using FileMode = FFXIVClientStructs.FFXIV.Client.System.File.FileMode;
 
 namespace BeastieBuddy.VfxSystem;
 
-public enum FileMode : uint
-{
-    LoadUnpackedResource = 0,
-    LoadFileResource = 1 // Default
-}
+//public enum FileMode : uint
+//{
+//    LoadUnpackedResource = 0,
+//    LoadFileResource = 1 // Default
+//}
 
 // Required Struct for File Descriptor
 [StructLayout(LayoutKind.Explicit)]

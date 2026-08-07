@@ -1,6 +1,8 @@
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.System.File;
 using System;
+using FileMode = FFXIVClientStructs.FFXIV.Client.System.File.FileMode;
 using System.IO;
 
 namespace BeastieBuddy.VfxSystem;
@@ -61,8 +63,7 @@ internal unsafe class VfxReplacer : IDisposable
         // Check against BeaconController's replacements
         if (BeaconController.Replacements.TryGetValue(path, out string? replacementPath))
         {
-            BeastieBuddy.Plugin.Log.Debug($"Replacing VFX path {path} with {replacementPath}");
-
+            
             // Access the path from the local field
             var p = Path.Join(_localVfxPath, replacementPath);
 
@@ -71,14 +72,16 @@ internal unsafe class VfxReplacer : IDisposable
 
         return _readSqPackHook!.Original(resourceManager, fileDescriptor, priority, isSync);
     }
-
     private byte DefaultRootedResourceLoad(string gamePath, void* resourceManager, SeFileDescriptor* fileDescriptor, int priority, bool isSync)
     {
         fileDescriptor->FileMode = FileMode.LoadUnpackedResource;
 
         var fd = stackalloc byte[0x20 + 2 * gamePath.Length + 0x16];
+
         fileDescriptor->FileDescriptor = fd;
+
         var fdPtr = (char*)(fd + 0x21);
+
         for (var i = 0; i < gamePath.Length; ++i)
         {
             (&fileDescriptor->Utf16FileName)[i] = gamePath[i];
@@ -88,7 +91,7 @@ internal unsafe class VfxReplacer : IDisposable
         (&fileDescriptor->Utf16FileName)[gamePath.Length] = '\0';
         fdPtr[gamePath.Length] = '\0';
 
-        // Use the SE ReadFile function.
-        return _readFile(resourceManager, fileDescriptor, priority, isSync);
+       
+        return _readFile(resourceManager, fileDescriptor, priority, true);
     }
 }

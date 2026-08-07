@@ -5,12 +5,15 @@ using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Diagnostics;
 
 namespace BeastieBuddy.VfxSystem;
 
 public unsafe class BeaconController : IDisposable
 {
     public static bool FeatureGlobalLock = true;
+
+    private Stopwatch LifetimeTimer { get; } = new();
 
     private Plugin PluginInstance { get; }
     private Vfx? VfxEngine { get; set; }
@@ -55,7 +58,7 @@ public unsafe class BeaconController : IDisposable
         }
     }
 
-    // Overload to handle raw data calls from UI (Fixes CS1501)
+    // Overload to handle raw data calls from UI
     public void Spawn(uint territoryType, uint mapId, float x, float y)
     {
         Spawn(new MapLinkPayload(territoryType, mapId, x, y));
@@ -119,6 +122,13 @@ public unsafe class BeaconController : IDisposable
             desiredState = BeaconState.Star;
         }
 
+        if (CurrentState != BeaconState.None && LifetimeTimer.ElapsedMilliseconds > 50000)
+        {
+            VfxEngine.QueueRemoveAll();
+            CurrentState = BeaconState.None;
+            return;
+        }
+
         if (CurrentState != desiredState)
         {
             VfxEngine.QueueRemoveAll();
@@ -135,6 +145,8 @@ public unsafe class BeaconController : IDisposable
                 VfxEngine.QueueSpawn(spawnId, VfxRoute2, adjusted, Quaternion.Identity);
             }
             CurrentState = desiredState;
+
+            LifetimeTimer.Restart();
         }
     }
 

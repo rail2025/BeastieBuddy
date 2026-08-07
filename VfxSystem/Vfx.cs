@@ -142,6 +142,10 @@ internal unsafe class Vfx : IDisposable
         vfx->Position = pos;
         vfx->Rotation = rotation;
         vfx->Scale = Vector3.One;
+        vfx->ActorCaster = -1;
+        vfx->ActorTarget = -1;
+        vfx->StaticCaster = -1;
+        vfx->StaticTarget = -1;
 
         // Critical Flags to prevent crash
         vfx->SomeFlags &= 0xF7;

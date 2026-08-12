@@ -26,6 +26,9 @@ public class Configuration : IPluginConfiguration
     public bool UseCardLayout { get; set; } = false;
     public HashSet<int> TamedBeasts { get; set; } = new();
 
+    public bool HasClickedAppIcon { get; set; } = false;
+    public bool HasSeenAppAnnouncement { get; set; } = false;
+
     [NonSerialized]
     private IDalamudPluginInterface? pluginInterface;
 

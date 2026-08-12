@@ -49,7 +49,6 @@ namespace BeastieBuddy.Windows
 
         // Blue Mage UI
         private readonly BlueMageUI blueMageUI;
-        private readonly BestiaryUI bestiaryUI;
         private readonly BestiaryUIV2 bestiaryUIV2;
         private readonly BestiaryManager bestiaryManager;
         private readonly IDataManager dataManager;
@@ -58,7 +57,14 @@ namespace BeastieBuddy.Windows
         private readonly ITextureProvider textureProvider;
         private readonly BeaconController beaconController;
         private readonly byte[]? iconBytes;
+        private readonly byte[]? appIconBytes;
         private IDalamudTextureWrap? backgroundTexture;
+        private IDalamudTextureWrap? appIconTexture;
+
+        private DateTime _nextShakeTime = DateTime.Now.AddSeconds(new Random().Next(30, 60));
+        private bool _isShaking = false;
+        private DateTime _shakeEndTime;
+        private readonly Random _random = new();
 
         private string? _tabToFocus;
 
@@ -91,7 +97,6 @@ namespace BeastieBuddy.Windows
             this.blueMageUI = new BlueMageUI(this.gameGui, this.dataManager, this.zoneNameToIds, this.SwitchToSearchTab, this.beaconController);
             this.bestiaryManager = new BestiaryManager(this.serverClient);
             _ = this.bestiaryManager.InitializeAsync(CancellationToken.None);
-            this.bestiaryUI = new BestiaryUI(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration, this.textureProvider);
             this.bestiaryUIV2 = new BestiaryUIV2(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration, this.textureProvider);
 
             var assembly = Assembly.GetExecutingAssembly();
@@ -109,6 +114,20 @@ namespace BeastieBuddy.Windows
             catch (Exception ex)
             {
                 Plugin.Log.Error(ex, "Failed to load background image resource.");
+            }
+            try
+            {
+                using var stream = assembly.GetManifestResourceStream("BeastieBuddy.bbapp.webp");
+                if (stream != null)
+                {
+                    using var memoryStream = new MemoryStream();
+                    stream.CopyTo(memoryStream);
+                    this.appIconBytes = memoryStream.ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "Failed to load app icon image resource.");
             }
 
             var globalScale = ImGui.GetIO().FontGlobalScale;
@@ -150,7 +169,7 @@ namespace BeastieBuddy.Windows
             searchCancellationTokenSource?.Dispose();
             serverClient.Dispose();
             backgroundTexture?.Dispose();
-            bestiaryUI.Dispose();
+            appIconTexture?.Dispose();
             bestiaryUIV2.Dispose();
         }
 
@@ -160,12 +179,18 @@ namespace BeastieBuddy.Windows
             {
                 backgroundTexture = textureProvider.CreateFromImageAsync(iconBytes).Result;
             }
+            if (appIconTexture == null && appIconBytes != null)
+            {
+                appIconTexture = textureProvider.CreateFromImageAsync(appIconBytes).Result;
+            }
         }
 
         public override void OnClose()
         {
             backgroundTexture?.Dispose();
             backgroundTexture = null;
+            appIconTexture?.Dispose();
+            appIconTexture = null;
         }
         private string GetFooterMessage()
         {
@@ -176,6 +201,7 @@ namespace BeastieBuddy.Windows
         }
         public override void Draw()
         {
+            var startCursorPos = ImGui.GetCursorPos();
             if (ImGui.BeginTabBar("##MainTabs"))
             {
                 ImGuiTabItemFlags beastieFlags = ImGuiTabItemFlags.None;
@@ -196,38 +222,56 @@ namespace BeastieBuddy.Windows
                 }
                 if (ImGui.BeginTabItem("Bestiary"))
                 {
-                    if (ImGui.IsItemHovered())
-                    {
-                        double time = ImGui.GetTime() * 4.0;
-                        int phase = (int)(Math.Floor(time) % 3);
-                        float t = (float)(time - Math.Floor(time));
-
-                        Vector4 c1, c2;
-                        if (phase == 0) { c1 = new Vector4(0.0f, 1.0f, 0.0f, 1.0f); c2 = new Vector4(1.0f, 0.5f, 0.0f, 1.0f); }
-                        else if (phase == 1) { c1 = new Vector4(1.0f, 0.5f, 0.0f, 1.0f); c2 = new Vector4(1.0f, 0.0f, 0.0f, 1.0f); }
-                        else { c1 = new Vector4(1.0f, 1.0f, 1.0f, 1.0f); c2 = new Vector4(0.0f, 1.0f, 0.0f, 1.0f); }
-
-                        Vector4 pulseColor = new Vector4(
-                            c1.X + (c2.X - c1.X) * t,
-                            c1.Y + (c2.Y - c1.Y) * t,
-                            c1.Z + (c2.Z - c1.Z) * t,
-                            1.0f
-                        );
-
-                        ImGui.PushStyleColor(ImGuiCol.PopupBg, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
-                        ImGui.PushStyleColor(ImGuiCol.Text, pulseColor);
-                        ImGui.SetTooltip("Please leave feedback on the GitHub issues page for your preferred layout (List vs Cards)!");
-                        ImGui.PopStyleColor(2);
-                    }
-                    bestiaryUI.Draw();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem("Bestiary V2"))
-                {
                     bestiaryUIV2.Draw();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();
+            }
+            if (appIconTexture != null)
+            {
+                var prevCursor = ImGui.GetCursorPos();
+                var buttonSize = new Vector2(24, 24) * ImGui.GetIO().FontGlobalScale;
+                var windowWidth = ImGui.GetWindowWidth();
+
+                ImGui.SetCursorPos(new Vector2(windowWidth - buttonSize.X - (ImGui.GetStyle().WindowPadding.X * 2.0f), startCursorPos.Y));
+
+                var imageCursor = ImGui.GetCursorPos();
+                if (!plugin.Configuration.HasClickedAppIcon && !_isShaking && DateTime.Now > _nextShakeTime)
+                {
+                    _isShaking = true;
+                    _shakeEndTime = DateTime.Now.AddSeconds(0.4);
+                    _nextShakeTime = DateTime.Now.AddSeconds(_random.Next(2, 5));
+                }
+                else if (_isShaking && DateTime.Now > _shakeEndTime)
+                {
+                    _isShaking = false;
+                }
+
+                var renderPos = imageCursor;
+                if (!plugin.Configuration.HasClickedAppIcon && _isShaking)
+                {
+                    renderPos.X += (float)(_random.NextDouble() * 4 - 2);
+                    renderPos.Y += (float)(_random.NextDouble() * 4 - 2);
+                }
+
+                ImGui.SetCursorPos(renderPos);
+                float alpha = plugin.Configuration.HasClickedAppIcon ? 1.0f : 0.75f + 0.25f * (float)Math.Sin(ImGui.GetTime() * 3.0);
+                ImGui.Image(appIconTexture.Handle, buttonSize, Vector2.Zero, Vector2.One, new Vector4(1.0f, 1.0f, 1.0f, alpha));
+                ImGui.SetCursorPos(imageCursor);
+
+                if (ImGui.InvisibleButton("##StandaloneAppBtn", buttonSize))
+                {
+                    plugin.Configuration.HasClickedAppIcon = true;
+                    plugin.Configuration.Save();
+                    Dalamud.Utility.Util.OpenLink("https://github.com/rail2025/BeastieBuddy-App/");
+                }
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip("Try the standalone, ToS-abiding, never-breaking-on-patch-days, overlay app instead!");
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                }
+
+                ImGui.SetCursorPos(prevCursor);
             }
         }
 

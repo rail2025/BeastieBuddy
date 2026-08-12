@@ -33,6 +33,7 @@ namespace BeastieBuddy
         [PluginService] public static IGameInteropProvider GameInteropProvider { get; private set; } = null!;
         [PluginService] public static IFramework Framework { get; private set; } = null!;
         [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
+        [PluginService] public static INotificationManager NotificationManager { get; private set; } = null!;
 
         public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("BeastieBuddy");
@@ -74,6 +75,29 @@ namespace BeastieBuddy
             PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 
             _teleport = PluginInterface.GetIpcSubscriber<uint, byte, bool>("Teleport");
+
+            if (!Configuration.HasSeenAppAnnouncement)
+            {
+                AnnounceStandaloneApp();
+                Configuration.HasSeenAppAnnouncement = true;
+                Configuration.Save();
+            }
+        }
+        private void AnnounceStandaloneApp()
+        {
+            var msg = "BeastieBuddy standalone is here!\n" +
+                      "FFXIV ToS-compliant. No Dalamud or game interaction. Works on patch days!\n" +
+                      "Code + SHA-256: https://github.com/rail2025/BeastieBuddy-App/\n" +
+                      "SmartScreen may warn. Free. Click the icon or this link!";
+
+            ChatGui.Print(msg);
+
+            NotificationManager.AddNotification(new Dalamud.Interface.ImGuiNotification.Notification
+            {
+                Title = "BeastieBuddy Standalone App",
+                Content = "A ToS-safe version is here! Check chat for details.",
+                Type = Dalamud.Interface.ImGuiNotification.NotificationType.Info
+            });
         }
 
         public void TeleportToMob(uint territoryTypeId, uint mapId, float mobX, float mobY)

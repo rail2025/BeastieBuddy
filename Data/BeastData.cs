@@ -15,6 +15,7 @@ namespace BeastieBuddy.Data
     public class BeastData
     {
         public string Name { get; set; } = "Unknown";
+        public uint IconId { get; set; }
         public string Location { get; set; } = "Unknown";
         public string AutoAttackElement { get; set; } = "Unknown";
         public string Classification { get; set; } = "Unknown";

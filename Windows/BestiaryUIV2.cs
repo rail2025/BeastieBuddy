@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace BeastieBuddy.Windows
@@ -23,7 +24,8 @@ namespace BeastieBuddy.Windows
         private string filterText = string.Empty;
         private readonly string[] filterElements = { "Fire", "Ice", "Wind", "Earth", "Lightning", "Water", "Slashing", "Blunt", "Piercing" };
         private readonly string[] filterClassifications = { "Beastkin", "Vilekin", "Cloudkin", "Seedkin", "Wavekin", "Scalekin", "Soulkin", "Ashkin" };
-        private readonly string[] filterStatus = { "Slow", "Paralyze", "Silence", "Interrupt", "Blind", "Knockdown", "Sleep", "Bind", "Heavy", "Doom", "Death", "Poison", "Paralysis" }; 
+        private readonly string[] filterStatus = { "Slow", "Paralyze", "Silence", "Interrupt", "Blind", "Knockdown", "Sleep", "Bind", "Heavy", "Doom", "Death", "Poison", "Paralysis" };
+        private readonly string[] filterLocations; 
         private readonly HashSet<string> activeFilters = new();
         private readonly HashSet<string> statusEffectKeywords = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -33,7 +35,7 @@ namespace BeastieBuddy.Windows
         private int captureFilterIndex = 0;
         private KeyValuePair<int, BeastData>? selectedBeast;
         private int currentPage;
-        private const int itemsPerPage = 20;
+        private const int itemsPerPage = 25;
         private readonly Dictionary<int, float> hoverScale = new();
         private float capturePulse;
         private bool detailTransitionActive;
@@ -42,18 +44,16 @@ namespace BeastieBuddy.Windows
         private uint transitionIconId;
         private float transitionProgress;
 
-        private readonly uint[] validIconIds = {
-            234401, 234402, 234403, 234404, 234405, 234412, 234413, 234414, 234415, 234416,
-            234417, 234419, 234420, 234421, 234422, 234424, 234429, 234430, 234431, 234432,
-            234433, 234434, 234435, 234436, 234437, 234439, 234441, 234442, 234443
-        };
-
         public BestiaryUIV2(Action<string> switchToSearchTab, BestiaryManager bestiaryManager, Configuration configuration, ITextureProvider textureProvider)
         {
             this.switchToSearchTab = switchToSearchTab;
             this.bestiaryManager = bestiaryManager;
             this.configuration = configuration;
             this.textureProvider = textureProvider;
+
+            filterLocations = bestiaryManager.Data.Beasts.Values.Select(b => b.Location)
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(l => l).ToArray();
         }
 
         public void Draw()
@@ -143,11 +143,12 @@ namespace BeastieBuddy.Windows
 
             if (ImGui.BeginPopup("FilterPopup"))
             {
-                if (ImGui.BeginTable("FilterTable", 3, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
+                if (ImGui.BeginTable("FilterTable", 4, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
                 {
                     ImGui.TableSetupColumn("Elements");
                     ImGui.TableSetupColumn("Classifications");
                     ImGui.TableSetupColumn("Status");
+                    ImGui.TableSetupColumn("Location");
                     ImGui.TableHeadersRow();
 
                     ImGui.TableNextRow();
@@ -172,6 +173,16 @@ namespace BeastieBuddy.Windows
                         bool isSel = activeFilters.Contains(opt);
                         if (ImGui.Checkbox(opt, ref isSel)) { if (isSel) activeFilters.Add(opt); else activeFilters.Remove(opt); }
                     }
+                    ImGui.TableNextColumn();
+                    foreach (var opt in filterLocations)
+                    {
+                        bool isSel = activeFilters.Contains(opt);
+                        if (ImGui.Checkbox(opt, ref isSel))
+                        {
+                            if (isSel) activeFilters.Add(opt);
+                            else activeFilters.Remove(opt);
+                        }
+                    }
                     ImGui.EndTable();
                 }
 
@@ -188,11 +199,12 @@ namespace BeastieBuddy.Windows
         private List<KeyValuePair<int, BeastData>> GetFilteredBeasts()
         {
             var result = new List<KeyValuePair<int, BeastData>>();
-            string filter = filterText.ToLowerInvariant();
+            string filter = filterText;
             foreach (var kvp in bestiaryManager.Data.Beasts)
             {
                 var beast = kvp.Value;
-                if (!string.IsNullOrEmpty(filter) && !beast.Name.ToLowerInvariant().Contains(filter))
+                if (!string.IsNullOrEmpty(filter) &&
+                    !beast.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (activeFilters.Count > 0)
@@ -201,17 +213,17 @@ namespace BeastieBuddy.Windows
                     foreach (var f in activeFilters)
                     {
                         if (string.Equals(beast.AutoAttackElement, f, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(beast.Classification, f, StringComparison.OrdinalIgnoreCase))
+                            string.Equals(beast.Classification, f, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(beast.Location, f, StringComparison.OrdinalIgnoreCase))
                         {
                             matchFound = true;
                             break;
                         }
 
-                        string fLower = f.ToLowerInvariant();
-                        if ((beast.Trick.Effect != null && beast.Trick.Effect.ToLowerInvariant().Contains(fLower)) ||
-                            (beast.TemperedRelease.Effect != null && beast.TemperedRelease.Effect.ToLowerInvariant().Contains(fLower)) ||
-                            (beast.Borrow.Effect != null && beast.Borrow.Effect.ToLowerInvariant().Contains(fLower)) ||
-                            (beast.PartingBlow.Effect != null && beast.PartingBlow.Effect.ToLowerInvariant().Contains(fLower)))
+                        if ((beast.Trick.Effect != null && beast.Trick.Effect.Contains(f, StringComparison.OrdinalIgnoreCase)) ||
+                           (beast.TemperedRelease.Effect != null && beast.TemperedRelease.Effect.Contains(f, StringComparison.OrdinalIgnoreCase)) ||
+                           (beast.Borrow.Effect != null && beast.Borrow.Effect.Contains(f, StringComparison.OrdinalIgnoreCase)) ||
+                           (beast.PartingBlow.Effect != null && beast.PartingBlow.Effect.Contains(f, StringComparison.OrdinalIgnoreCase)))
                         {
                             matchFound = true;
                             break;
@@ -308,12 +320,12 @@ namespace BeastieBuddy.Windows
 
             using (var grid = ImRaii.Table(
                 "CardGrid",
-                4,
+                5,
                 ImGuiTableFlags.SizingStretchSame | ImGuiTableFlags.NoSavedSettings))
             {
                 if (grid)
                 {
-                    for (int i = 0; i < 4; i++)
+                    for (int i = 0; i < 5; i++)
                         ImGui.TableSetupColumn($"##{i}");
 
                     ImGui.TableNextRow();
@@ -374,8 +386,7 @@ namespace BeastieBuddy.Windows
                         ImGui.GetWindowSize().X * 0.72f,
                         150);
 
-                transitionIconId =
-                    validIconIds[(id - 1) % validIconIds.Length];
+                transitionIconId = beast.IconId;
 
                 transitionProgress = 0f;
                 detailTransitionActive = true;
@@ -426,7 +437,7 @@ namespace BeastieBuddy.Windows
             }
 
             ImGui.SetCursorScreenPos(position + new Vector2(26, 23));
-            var icon = textureProvider.GetFromGameIcon(new GameIconLookup(validIconIds[(id - 1) % validIconIds.Length])).GetWrapOrDefault();
+            var icon = textureProvider.GetFromGameIcon(new GameIconLookup(beast.IconId)).GetWrapOrDefault();
 
             if (icon != null)
             {
@@ -434,7 +445,13 @@ namespace BeastieBuddy.Windows
             }
 
             ImGui.SetCursorScreenPos(position + new Vector2(8, 75));
-            ImGui.TextWrapped(beast.Name);
+            float availableNameWidth = ImGui.GetColumnWidth() - 16;
+            ImGui.PushClipRect(
+                position + new Vector2(8, 75),
+                position + new Vector2(8 + availableNameWidth, 90),
+                true);
+            ImGui.Text(beast.Name);
+            ImGui.PopClipRect();
             ImGui.SetCursorScreenPos(position + new Vector2(8, 91));
             ImGui.Text(beast.Classification);
             ImGui.SetCursorScreenPos(position + new Vector2(8, 107));
@@ -509,7 +526,7 @@ namespace BeastieBuddy.Windows
 
         private void DrawLargeIcon(int id)
         {
-            uint iconId = validIconIds[(id - 1) % validIconIds.Length];
+            uint iconId = selectedBeast.Value.Value.IconId;
             var icon = textureProvider.GetFromGameIcon(new GameIconLookup(iconId)).GetWrapOrDefault();
 
             if (icon == null) return;

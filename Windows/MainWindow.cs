@@ -50,6 +50,8 @@ namespace BeastieBuddy.Windows
         // Blue Mage UI
         private readonly BlueMageUI blueMageUI;
         private readonly BestiaryUIV2 bestiaryUIV2;
+        private readonly BestiaryCombatLab bestiaryCombatLab;
+        private readonly CrucibleManager crucibleManager;
         private readonly BestiaryManager bestiaryManager;
         private readonly IDataManager dataManager;
         private readonly Plugin plugin;
@@ -98,6 +100,8 @@ namespace BeastieBuddy.Windows
             this.bestiaryManager = new BestiaryManager(this.serverClient);
             _ = this.bestiaryManager.InitializeAsync(CancellationToken.None);
             this.bestiaryUIV2 = new BestiaryUIV2(this.SwitchToSearchTab, this.bestiaryManager, plugin.Configuration, this.textureProvider);
+            this.crucibleManager = new CrucibleManager(this.serverClient);
+            this.bestiaryCombatLab = new BestiaryCombatLab(this.crucibleManager, this.bestiaryManager, plugin.Configuration, this.textureProvider);
 
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "BeastieBuddy.icon.png";
@@ -171,6 +175,7 @@ namespace BeastieBuddy.Windows
             backgroundTexture?.Dispose();
             appIconTexture?.Dispose();
             bestiaryUIV2.Dispose();
+            bestiaryCombatLab.Dispose();
         }
 
         public override void OnOpen()
@@ -223,6 +228,11 @@ namespace BeastieBuddy.Windows
                 if (ImGui.BeginTabItem("Bestiary"))
                 {
                     bestiaryUIV2.Draw();
+                    ImGui.EndTabItem();
+                }
+                if (ImGui.BeginTabItem("Combat Lab"))
+                {
+                    bestiaryCombatLab.Draw();
                     ImGui.EndTabItem();
                 }
                 ImGui.EndTabBar();

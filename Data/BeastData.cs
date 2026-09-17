@@ -28,9 +28,20 @@ namespace BeastieBuddy.Data
         public BeastSkill Borrow { get; set; } = new();
 
         public BeastSkill PartingBlow { get; set; } = new();
+        public CrucibleAttributes? Rank25Attributes { get; set; }
     }
 
-    public class BestiaryResponse
+    public class CrucibleAttributes
+    {
+        public int Strength { get; set; }
+        public int Intelligence { get; set; }
+        public int Constitution { get; set; }
+        public int PhysicalResistance { get; set; }
+        public int MagicalResistance { get; set; }
+        public int Satiety { get; set; }
+    }
+
+public class BestiaryResponse
     {
         public int Version { get; set; } = 1;
         public DateTime Updated { get; set; } = DateTime.MinValue;

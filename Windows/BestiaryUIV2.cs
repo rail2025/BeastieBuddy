@@ -43,6 +43,24 @@ namespace BeastieBuddy.Windows
         private Vector2 transitionEnd;
         private uint transitionIconId;
         private float transitionProgress;
+        private int selectedRank = 25;
+
+        private static readonly float[] ConCurve =
+        {
+            0.347f, 0.365f, 0.383f, 0.400f, 0.420f, 0.442f, 0.463f, 0.488f, 0.512f, 0.537f,
+            0.564f, 0.592f, 0.620f, 0.650f, 0.675f, 0.687f, 0.706f, 0.730f, 0.761f, 0.800f,
+            0.825f, 0.856f, 0.893f, 0.942f, 1.000f
+        };
+
+        private static int GetCrucibleStat(int rank25Value, int rank, bool isCon = false, bool isDef = false)
+        {
+            if (rank >= 25) return rank25Value;
+            if (isCon) return (int)MathF.Round(rank25Value * ConCurve[Math.Clamp(rank - 1, 0, 24)]);
+
+            float baseRatio = isDef ? 0.55f : 0.42f;
+            float baseVal = MathF.Round(rank25Value * baseRatio);
+            return (int)MathF.Round(baseVal + (rank25Value - baseVal) * ((rank - 1) / 24f));
+        }
 
         public BestiaryUIV2(Action<string> switchToSearchTab, BestiaryManager bestiaryManager, Configuration configuration, ITextureProvider textureProvider)
         {
@@ -495,7 +513,7 @@ namespace BeastieBuddy.Windows
             ImGui.Text(beast.Name);
             ImGui.Spacing();
 
-            DrawLargeIcon(selectedBeast.Value.Key);
+            DrawCrucibleTop(selectedBeast.Value.Key, beast, elementColor);
             ImGui.Spacing();
 
             DrawInfoBox("Habitat", $"📍 {beast.Location}", elementColor);
@@ -522,6 +540,58 @@ namespace BeastieBuddy.Windows
             ImGui.TextColored(new Vector4(1f, 0.85f, 0.3f, 1f), "Beastmaster Journal");
             ImGui.Spacing();
             ImGui.TextWrapped("Select a creature card to view its habitat, abilities, and collection details.");
+        }
+
+        private void DrawCrucibleTop(int id, BeastData beast, Vector4 elementColor)
+        {
+            using var topTable = ImRaii.Table("##detail_top_table", 2, ImGuiTableFlags.SizingFixedFit);
+            if (!topTable) return;
+
+            ImGui.TableSetupColumn("##portrait", ImGuiTableColumnFlags.WidthFixed, 88);
+            ImGui.TableSetupColumn("##stats", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableNextRow();
+
+            ImGui.TableNextColumn();
+            var icon = textureProvider.GetFromGameIcon(new GameIconLookup(beast.IconId)).GetWrapOrDefault();
+            if (icon != null)
+            {
+                ImGui.Image(icon.Handle, new Vector2(80, 80));
+            }
+
+            ImGui.TableNextColumn();
+            ImGui.TextDisabled($"[{beast.Classification}]");
+            ImGui.SameLine();
+            ImGui.TextColored(elementColor, $"[{beast.AutoAttackElement}]");
+            ImGui.SameLine();
+            ImGui.TextColored(new Vector4(0.9f, 0.8f, 0.4f, 1f), $"[Feed Cap: {beast.Rank25Attributes?.Satiety ?? 0}]");
+
+            if (beast.Rank25Attributes != null)
+            {
+                ImGui.SetNextItemWidth(-1);
+                ImGui.SliderInt("##crucible_rank", ref selectedRank, 1, 25, "Crucible Rank: %d");
+
+                var attrs = beast.Rank25Attributes;
+                DrawStatBar("STR", attrs.Strength, new Vector4(1f, 0.42f, 0.42f, 1f), false, false);
+                DrawStatBar("INT", attrs.Intelligence, new Vector4(0.3f, 0.67f, 0.97f, 1f), false, false);
+                DrawStatBar("CON", attrs.Constitution, new Vector4(0.32f, 0.81f, 0.4f, 1f), true, false);
+                DrawStatBar("P.DEF", attrs.PhysicalResistance, new Vector4(0.99f, 0.77f, 0.1f, 1f), false, true);
+                DrawStatBar("M.DEF", attrs.MagicalResistance, new Vector4(0.8f, 0.36f, 0.91f, 1f), false, true);
+            }
+        }
+
+        private void DrawStatBar(string label, int r25Val, Vector4 color, bool isCon, bool isDef)
+        {
+            int stat = GetCrucibleStat(r25Val, selectedRank, isCon, isDef);
+            ImGui.TextDisabled(label);
+            ImGui.SameLine(45);
+
+            using (ImRaii.PushColor(ImGuiCol.PlotHistogram, color))
+            {
+                ImGui.ProgressBar(Math.Clamp(stat / 400f, 0f, 1f), new Vector2(ImGui.GetContentRegionAvail().X - 35, 12), string.Empty);
+            }
+
+            ImGui.SameLine();
+            ImGui.Text($"{stat}");
         }
 
         private void DrawLargeIcon(int id)

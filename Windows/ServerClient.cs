@@ -108,21 +108,17 @@ namespace BeastieBuddy.Windows
         {
             var primaryUrl = useBackupServer ? RenderUrl : CloudflareUrl;
             var request = new HttpRequestMessage(HttpMethod.Get, $"{primaryUrl}/beastiebuddy/bestiary.json");
-
             if (!string.IsNullOrEmpty(currentETag))
             {
                 request.Headers.IfNoneMatch.ParseAdd(currentETag);
             }
-
             try
             {
                 var response = await httpClient.SendAsync(request, cancellationToken);
-
                 if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
                 {
                     return null;
                 }
-
                 if (response.IsSuccessStatusCode)
                 {
                     var json = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -136,6 +132,37 @@ namespace BeastieBuddy.Windows
             }
             return null;
         }
+
+        public async Task<List<string>?> GetCrucibleRankingsAsync(string payloadJson, System.Threading.CancellationToken cancellationToken)
+        {
+            const string vercelUrl = "https://beastiebuddy.vercel.app";
+            try
+            {
+                using var content = new StringContent(payloadJson, System.Text.Encoding.UTF8, "application/json");
+                var response = await httpClient.PostAsync($"{vercelUrl}/beastiebuddy/crucible/rankings", content, cancellationToken);
+               
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                    return JsonConvert.DeserializeObject<List<string>>(json);
+                }
+                else
+                {
+                    var errBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                    Plugin.Log.Error($"[Crucible] HTTP Error {(int)response.StatusCode}: {errBody}");
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Plugin.Log.Error(ex, "[Crucible] Server call failed or endpoint not available.");
+            }
+            return null;
+        }
+
         public void Dispose()
         {
             httpClient.Dispose();
